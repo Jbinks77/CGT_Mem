@@ -9,6 +9,11 @@ INSTALLER_EXE = os.path.join(
     "installer", "cmdmem-installer.exe"
 )
 
+SSH_CLIENT_EXE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "dist", "cmdmem-ssh.exe"
+)
+
 
 def _generate_installer(backend_url: str) -> str:
     hook_content = r"""# Smart Command Memory - Hook
@@ -163,16 +168,29 @@ async def download_installer_exe():
     )
 
 
+@router.get("/download/ssh-client.exe")
+async def download_ssh_client():
+    if not os.path.exists(SSH_CLIENT_EXE):
+        raise HTTPException(status_code=404, detail="SSH client not available yet.")
+    return FileResponse(
+        path=SSH_CLIENT_EXE,
+        filename="cmdmem-ssh.exe",
+        media_type="application/octet-stream",
+    )
+
+
 @router.get("/download/info")
 async def download_info(request: Request):
     host = request.headers.get("host", "localhost:8000")
     scheme = "https" if request.url.scheme == "https" else "http"
     backend_url = f"{scheme}://{host}"
     exe_available = os.path.exists(INSTALLER_EXE)
+    ssh_available = os.path.exists(SSH_CLIENT_EXE)
     return {
         "installer_exe_url": f"{backend_url}/api/download/installer.exe" if exe_available else None,
         "installer_ps1_url": f"{backend_url}/api/download/installer.ps1",
         "exe_available": exe_available,
+        "ssh_client_available": ssh_available,
         "backend_url": backend_url,
         "supported_shells": ["PowerShell 5.1+", "PowerShell 7+"],
         "install_command": f'irm "{backend_url}/api/download/installer.ps1" | iex',

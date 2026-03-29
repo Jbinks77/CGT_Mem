@@ -6,6 +6,7 @@ interface DownloadInfo {
   installer_exe_url: string | null;
   installer_ps1_url: string;
   exe_available: boolean;
+  ssh_client_available: boolean;
   backend_url: string;
   install_command: string;
   supported_shells: string[];
@@ -288,6 +289,94 @@ export default function DownloadPage() {
                   {item.ok ? "OUI" : "MASQUÉ"}
                 </span>
               </div>
+            ))}
+          </div>
+        </div>
+
+        {/* SSH Client */}
+        <div style={{
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: 20,
+          overflow: "hidden",
+        }}>
+          {/* Header */}
+          <div style={{
+            padding: "28px 32px",
+            borderBottom: "1px solid var(--border)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+            flexWrap: "wrap",
+            background: "linear-gradient(135deg, rgba(56,189,248,0.06), transparent)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{
+                width: 48, height: 48,
+                background: "rgba(56,189,248,0.1)",
+                border: "1px solid rgba(56,189,248,0.25)",
+                borderRadius: 14,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 22, flexShrink: 0,
+              }}>🖥</div>
+              <div>
+                <div style={{ fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 800, marginBottom: 3 }}>
+                  cmdmem-ssh.exe
+                </div>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--muted)", letterSpacing: "0.05em" }}>
+                  Client SSH avec capture automatique · Windows
+                </div>
+              </div>
+            </div>
+            <a
+              href="/api/download/ssh-client.exe"
+              download="cmdmem-ssh.exe"
+              style={{
+                background: info?.ssh_client_available
+                  ? "linear-gradient(135deg, #0ea5e9, #0284c7)"
+                  : "var(--surface2)",
+                color: info?.ssh_client_available ? "white" : "var(--muted)",
+                textDecoration: "none",
+                fontFamily: "var(--font-display)",
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: "0.03em",
+                padding: "12px 28px",
+                borderRadius: 10,
+                boxShadow: info?.ssh_client_available ? "0 4px 18px rgba(14,165,233,0.35)" : "none",
+                border: info?.ssh_client_available ? "none" : "1px solid var(--border2)",
+                pointerEvents: info?.ssh_client_available ? "auto" : "none",
+                opacity: info?.ssh_client_available ? 1 : 0.5,
+                transition: "all 0.2s",
+                display: "inline-block",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {info?.ssh_client_available ? "⬇ Télécharger" : "Indisponible"}
+            </a>
+          </div>
+
+          {/* Features */}
+          <div style={{ padding: "20px 32px", display: "flex", flexWrap: "wrap", gap: 10 }}>
+            {[
+              "Multi-onglets SSH",
+              "Capture automatique des commandes",
+              "Filtrage intelligent des doublons",
+              "Autocomplétion Tab",
+              "Gestionnaire de sessions",
+            ].map((feat) => (
+              <span key={feat} style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--muted)",
+                background: "var(--surface2)",
+                border: "1px solid var(--border)",
+                padding: "5px 12px",
+                borderRadius: 20,
+              }}>
+                {feat}
+              </span>
             ))}
           </div>
         </div>

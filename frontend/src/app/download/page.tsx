@@ -43,9 +43,9 @@ export default function DownloadPage() {
     }
   };
 
-  const downloadUrl = info?.installer_exe_url ?? info?.installer_ps1_url ?? "#";
-  const fileName = info?.exe_available ? "cmdmem-installer.exe" : "cmdmem-installer.ps1";
   const isExe = info?.exe_available ?? false;
+  const downloadUrl = isExe ? "/api/download/installer.exe" : "/api/download/installer.ps1";
+  const fileName = isExe ? "cmdmem-installer.exe" : "cmdmem-installer.ps1";
 
   return (
     <div style={{ minHeight: "100vh", paddingTop: 60 }}>

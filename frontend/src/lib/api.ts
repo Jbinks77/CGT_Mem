@@ -62,6 +62,25 @@ export async function getDocEntry(id: number): Promise<DocEntry> {
   return res.json();
 }
 
+export interface DocEntryUpdate {
+  description?: string;
+  section?: string;
+  category?: string;
+  tags?: string[];
+  synonyms?: string[];
+  is_sensitive?: boolean;
+}
+
+export async function updateDocEntry(id: number, payload: DocEntryUpdate): Promise<DocEntry> {
+  const res = await fetch(`${API_BASE}/documentation/entry/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to update entry");
+  return res.json();
+}
+
 export async function getStats(): Promise<Stats> {
   const res = await fetch(`${API_BASE}/stats`);
   if (!res.ok) throw new Error("Failed to load stats");

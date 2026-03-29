@@ -38,7 +38,15 @@ MUTED    = "#52526a"
 GREEN    = "#10b981"
 RED      = "#f43f5e"
 
-ANSI_RE   = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+ANSI_RE  = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+CTRL_RE  = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]')
+
+def clean_output(text):
+    text = ANSI_RE.sub("", text)
+    text = text.replace("\r\n", "\n").replace("\r", "")
+    text = CTRL_RE.sub("", text)
+    return text
+
 FONT_MONO = ("Consolas", 10)
 FONT_UI   = ("Segoe UI", 10)
 FONT_SM   = ("Segoe UI", 9)
@@ -170,12 +178,18 @@ class SSHTab(ctk.CTkFrame):
         self.session   = session or {}
         self.on_title  = on_title
         self.on_sync   = on_sync
-        self.ssh       = None
-        self.channel   = None
-        self.reading   = False
-        self.connected = False
-        self.history   = []
-        self.hist_idx  = 0
+        self.ssh            = None
+        self.channel        = None
+        self.reading        = False
+        self.connected      = False
+        self.history        = []
+        self.hist_idx       = 0
+        self._tab_pending = False
+        self._tab_base    = ""
+        self._tab_sent    = ""
+        self._tab_accum   = ""
+        self._server_buf  = ""
+        self._cmd_seen    = {}   # base_cmd → set(full_commands) pour déduplication
         self._build()
         if self.session.get("host"):
             self.after(150, self._auto_connect)
@@ -286,7 +300,10 @@ class SSHTab(ctk.CTkFrame):
             try:
                 data = self.channel.recv(8192)
                 if data:
-                    t = ANSI_RE.sub("", data.decode("utf-8", errors="replace"))
+                    raw = data.decode("utf-8", errors="replace")
+                    if self._tab_pending:
+                        self._tab_accum += raw
+                    t = clean_output(raw)
                     self.after(0, lambda x=t: self._write(x))
             except socket.timeout:
                 continue
@@ -298,19 +315,88 @@ class SSHTab(ctk.CTkFrame):
     def _send(self, _=None):
         if not self.channel or self.channel.closed: return
         cmd = self.ivar.get()
-        self.channel.send(cmd + "\n")
+        # Efface le buffer serveur avec des backspaces, puis envoie la commande
+        clear = "\x08" * len(self._server_buf)
+        diff  = cmd[len(self._server_buf):] if cmd.startswith(self._server_buf) else cmd
+        to_send = (clear if not cmd.startswith(self._server_buf) else "") + diff
+        self.channel.send(to_send + "\n")
+        self._server_buf = ""
         self.ivar.set("")
         if cmd.strip():
             self.history.append(cmd)
             self.hist_idx = len(self.history)
-            h = self.session.get("host", "")
-            u = self.session.get("user", "")
-            threading.Thread(target=self._push, args=(cmd, h, u), daemon=True).start()
+            if self._should_send(cmd):
+                h = self.session.get("host", "")
+                u = self.session.get("user", "")
+                threading.Thread(target=self._push, args=(cmd, h, u), daemon=True).start()
 
     def _tab_complete(self, _=None):
-        if self.channel and not self.channel.closed:
-            self.channel.send(self.ivar.get() + "\t")
+        if not self.channel or self.channel.closed:
+            return "break"
+        current = self.ivar.get()
+        self._tab_base    = current
+        self._tab_accum   = ""
+        self._tab_pending = True
+        if current.startswith(self._server_buf):
+            to_send = current[len(self._server_buf):]   # diff seulement
+        else:
+            # Désynchronisé : backspaces pour effacer, puis texte complet
+            to_send = "\x08" * len(self._server_buf) + current
+        self._server_buf = current
+        self._tab_sent   = to_send   # mémorise ce qu'on envoie (sans \t)
+        self.channel.send(to_send + "\t")
+        self.after(800, self._apply_tab)
         return "break"
+
+    def _apply_tab(self):
+        self._tab_pending = False
+        raw   = self._tab_accum
+        clean = clean_output(raw)
+
+        if not clean.strip():
+            return
+
+        # Supprimer l'écho du texte envoyé (le PTY réécho ce qu'on a tapé)
+        sent = self._tab_sent.lstrip("\x08")
+        if sent and clean.startswith(sent):
+            clean = clean[len(sent):]
+
+        has_newline = "\n" in clean
+
+        # ── Cas 1 : complétion unique — pas de saut de ligne ──
+        if not has_newline and clean.strip():
+            suffix = clean.strip()
+            # Rejeter si ça ressemble à un prompt ou une commande complète
+            if not any(c in suffix for c in ["#", "$", "%", "\n"]):
+                completed = self._tab_base + suffix
+                self.ivar.set(completed)
+                self._server_buf = completed
+                self.inp.icursor("end")
+                return
+
+        # ── Cas 2 : cherche une ligne commençant par notre base ──
+        # (réaffichage complet ou plusieurs complétions)
+        lines = [l.strip() for l in clean.split("\n") if l.strip()]
+        for line in reversed(lines):
+            if line.startswith(self._tab_base) and line != self._tab_base:
+                self.ivar.set(line)
+                self._server_buf = line
+                self.inp.icursor("end")
+                return
+
+        # ── Cas 3 : le clean contient le _tab_base en entier (redraw ligne) ──
+        idx = clean.rfind(self._tab_base)
+        if idx != -1:
+            rest = clean[idx + len(self._tab_base):].split("\n")[0].split()[0] if clean[idx + len(self._tab_base):].strip() else ""
+            if rest:
+                completed = self._tab_base + rest
+                self.ivar.set(completed)
+                self._server_buf = completed
+                self.inp.icursor("end")
+                return
+
+        # Plusieurs options affichées → serveur garde le texte original
+        self._server_buf = self._tab_base
 
     def _sigint(self, _=None):
         if self.channel and not self.channel.closed:
@@ -350,6 +436,39 @@ class SSHTab(ctk.CTkFrame):
         else:   self.out.insert("end", text)
         self.out.see("end")
         self.out.configure(state="disabled")
+
+    # ── Filtre déduplication ──────────────────────────────────────────────────
+    def _should_send(self, command):
+        """
+        Retourne True si la commande mérite d'être envoyée à cmdmem.
+        Règles :
+          - Même base + mêmes flags (commençant par -) → False
+            (les arguments positionnels comme chemins/fichiers sont ignorés)
+          - Même base, flags différents → True  (nouvelle variante utile)
+          - Nouvelle commande → True
+        Exemples :
+          cd /var  puis  cd /etc  → même clé "cd|"  → ignoré
+          ls -al /var  puis  ls -al /tmp  → même clé "ls|-al"  → ignoré
+          ls  puis  ls -al  → clés "ls|" et "ls|-al"  → les deux envoyés
+        """
+        cmd = command.strip()
+        if not cmd:
+            return False
+
+        parts = cmd.split()
+        base  = parts[0].lower()
+        # Seuls les flags (commençant par -) entrent dans la clé ; les chemins/args sont ignorés
+        flags = " ".join(sorted(p for p in parts[1:] if p.startswith("-")))
+        key   = f"{base}|{flags}"
+
+        if base not in self._cmd_seen:
+            self._cmd_seen[base] = set()
+
+        if key in self._cmd_seen[base]:
+            return False          # même commande + mêmes options déjà vue
+
+        self._cmd_seen[base].add(key)
+        return True
 
     # ── cmdmem push ───────────────────────────────────────────────────────────
     def _push(self, cmd, host, user):

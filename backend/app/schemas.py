@@ -64,6 +64,15 @@ class SearchResponse(BaseModel):
     total: int
 
 
+class DocEntryUpdate(BaseModel):
+    description: str | None = None
+    section: str | None = None
+    category: str | None = None
+    tags: list[str] | None = None
+    synonyms: list[str] | None = None
+    is_sensitive: bool | None = None
+
+
 class StatsResponse(BaseModel):
     total_commands: int
     total_docs: int

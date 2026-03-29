@@ -81,6 +81,32 @@ export async function updateDocEntry(id: number, payload: DocEntryUpdate): Promi
   return res.json();
 }
 
+export interface TldrExample {
+  description: string;
+  command: string;
+}
+
+export interface TldrData {
+  found: boolean;
+  summary: string;
+  examples: TldrExample[];
+  platform?: string;
+}
+
+export async function getTldrExamples(command: string): Promise<TldrData> {
+  const base = command.trim().split(/\s+/)[0];
+  const res = await fetch(`${API_BASE}/tldr/examples/${encodeURIComponent(base)}`);
+  if (!res.ok) return { found: false, summary: "", examples: [] };
+  return res.json();
+}
+
+export async function importFromTldr(command: string): Promise<{ status: string }> {
+  const base = command.trim().split(/\s+/)[0];
+  const res = await fetch(`${API_BASE}/tldr/import/${encodeURIComponent(base)}`, { method: "POST" });
+  if (!res.ok) throw new Error("Import failed");
+  return res.json();
+}
+
 export async function getStats(): Promise<Stats> {
   const res = await fetch(`${API_BASE}/stats`);
   if (!res.ok) throw new Error("Failed to load stats");

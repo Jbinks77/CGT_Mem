@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { getDocEntry, updateDocEntry, type DocEntry } from "@/lib/api";
+import { getDocEntry, updateDocEntry, getTldrExamples, importFromTldr, type DocEntry, type TldrData } from "@/lib/api";
 
 const sectionColor: Record<string, string> = {
   linux: "#10b981",
@@ -57,6 +57,10 @@ export default function DocDetailPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [tldr, setTldr] = useState<TldrData | null>(null);
+  const [tldrLoading, setTldrLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
 
   // form state
   const [fDesc, setFDesc] = useState("");
@@ -69,8 +73,33 @@ export default function DocDetailPage() {
   useEffect(() => {
     const id = Number(params.id);
     if (!id) return;
-    getDocEntry(id).then(setEntry).catch(() => setError(true));
+    getDocEntry(id).then((e) => {
+      setEntry(e);
+      // Auto-fetch tldr examples for the base command
+      const base = e.command_normalized.trim().split(/\s+/)[0];
+      setTldrLoading(true);
+      getTldrExamples(base)
+        .then(setTldr)
+        .finally(() => setTldrLoading(false));
+    }).catch(() => setError(true));
   }, [params.id]);
+
+  const handleCopy = (cmd: string) => {
+    navigator.clipboard.writeText(cmd).then(() => {
+      setCopied(cmd);
+      setTimeout(() => setCopied(null), 1800);
+    });
+  };
+
+  const handleImport = async () => {
+    if (!entry) return;
+    setImporting(true);
+    try {
+      await importFromTldr(entry.command_normalized);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const openEdit = () => {
     if (!entry) return;
@@ -234,6 +263,94 @@ export default function DocDetailPage() {
                   </div>
                 </div>
               )}
+
+            {/* ── EXEMPLES tldr ── */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--muted)", letterSpacing: "0.2em", textTransform: "uppercase" }}>
+                  Exemples
+                  {tldr?.platform && (
+                    <span style={{ marginLeft: 8, color: "var(--accent2)", opacity: 0.7 }}>· tldr/{tldr.platform}</span>
+                  )}
+                </div>
+                <button
+                  onClick={handleImport}
+                  disabled={importing}
+                  title="Indexer pour rendre trouvable par description"
+                  style={{
+                    fontFamily: "var(--font-mono)", fontSize: 9,
+                    color: "var(--accent2)", letterSpacing: "0.08em",
+                    background: "rgba(108,99,255,0.08)",
+                    border: "1px solid rgba(108,99,255,0.2)",
+                    padding: "4px 10px", borderRadius: 5,
+                    cursor: importing ? "wait" : "pointer",
+                    opacity: importing ? 0.5 : 1,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {importing ? "Import…" : "⬇ Indexer"}
+                </button>
+              </div>
+
+              {tldrLoading && (
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--muted)", opacity: 0.5 }}>
+                  Chargement des exemples…
+                </div>
+              )}
+
+              {!tldrLoading && tldr && !tldr.found && (
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--muted)", opacity: 0.5 }}>
+                  Aucun exemple tldr trouvé.
+                </div>
+              )}
+
+              {!tldrLoading && tldr?.found && tldr.examples.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {tldr.examples.map((ex, i) => (
+                    <div
+                      key={i}
+                      onClick={() => handleCopy(ex.command)}
+                      style={{
+                        background: "var(--surface2)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 10,
+                        padding: "12px 16px",
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                        gap: 12,
+                        cursor: "pointer",
+                        transition: "border-color 0.2s",
+                      }}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(108,99,255,0.35)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em", marginBottom: 6 }}>
+                          {ex.description}
+                        </div>
+                        <code style={{
+                          fontFamily: "var(--font-mono)", fontSize: 13,
+                          color: "var(--accent2)",
+                          background: "rgba(108,99,255,0.08)",
+                          padding: "4px 10px", borderRadius: 6,
+                          display: "inline-block", wordBreak: "break-all",
+                        }}>
+                          {ex.command}
+                        </code>
+                      </div>
+                      <div style={{
+                        fontFamily: "var(--font-mono)", fontSize: 9, flexShrink: 0, paddingTop: 2,
+                        color: copied === ex.command ? "var(--green)" : "var(--muted)",
+                        letterSpacing: "0.05em", transition: "color 0.2s",
+                      }}>
+                        {copied === ex.command ? "✓ copié" : "copier"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
               {entry.is_sensitive && (
                 <div style={{ background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.2)", borderRadius: 10, padding: "14px 16px", display: "flex", gap: 10, alignItems: "center" }}>

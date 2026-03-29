@@ -34,3 +34,5 @@ frontend/public/*.webm
 .DS_Store
 Thumbs.db
 *.log
+
+.vercel

@@ -11,56 +11,246 @@ logger = logging.getLogger(__name__)
 
 
 TLDR_SEED_COMMANDS = [
-    # ── Linux / Sécurité ──────────────────────────────────────────────────────
-    "openssl", "ssh", "ssh-keygen", "gpg", "fail2ban", "ufw", "iptables", "nmap",
-    "tcpdump", "netstat", "ss", "curl", "wget",
-    # Système / logs
-    "ls", "cd", "cat", "tail", "head", "grep", "find", "chmod", "chown", "ps",
-    "top", "htop", "df", "du", "free", "systemctl", "journalctl", "crontab",
-    "sed", "awk", "sort", "uniq", "wc", "cut", "xargs", "tee", "less", "more",
-    "echo", "env", "export", "which", "whereis", "man", "history",
-    # Réseau Linux
-    "ping", "traceroute", "dig", "nslookup", "ifconfig", "ip", "route", "nc",
-    "host", "whois", "mtr", "arp",
-    # Archives / fichiers
-    "tar", "zip", "unzip", "gzip", "rsync", "scp", "cp", "mv", "rm", "mkdir",
-    "ln", "touch", "file", "stat", "lsof", "mount", "umount",
-    # Packages / devops
-    "apt", "apt-get", "yum", "dnf", "pip", "git", "docker", "kubectl",
-    "ansible", "terraform", "helm",
-    # Utilisateurs / perms
-    "sudo", "su", "useradd", "usermod", "userdel", "passwd", "id", "who",
-    "groups", "visudo",
-    # ── PowerShell ────────────────────────────────────────────────────────────
-    # Navigation / fichiers
-    "get-childitem", "set-location", "get-location", "get-item", "get-content",
-    "set-content", "add-content", "copy-item", "move-item", "remove-item",
-    "new-item", "rename-item", "test-path", "get-acl", "set-acl",
-    # Processus / services
-    "get-process", "stop-process", "start-process", "get-service",
-    "start-service", "stop-service", "restart-service", "set-service",
-    # Réseau PowerShell
-    "test-netconnection", "invoke-webrequest", "invoke-restmethod",
-    "get-netadapter", "get-netipaddress", "test-connection",
-    # Utilisateurs / sécurité
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # LINUX / UNIX
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    # Fichiers & navigation
+    "ls", "cd", "pwd", "cp", "mv", "rm", "mkdir", "rmdir", "touch", "ln",
+    "find", "locate", "which", "whereis", "tree", "file", "stat", "du", "df",
+    "lsof", "fuser", "mount", "umount", "dd", "shred", "truncate",
+    "basename", "dirname", "realpath",
+
+    # Lecture / texte
+    "cat", "less", "more", "head", "tail", "tac", "nl", "bat",
+    "grep", "egrep", "fgrep", "ripgrep", "awk", "sed", "cut", "tr",
+    "sort", "uniq", "wc", "diff", "patch", "comm", "join", "paste",
+    "column", "tee", "xargs", "strings", "od", "xxd", "hexdump",
+
+    # Archives & compression
+    "tar", "gzip", "gunzip", "bzip2", "bunzip2", "xz", "zip", "unzip",
+    "7z", "rar", "unrar", "zstd", "pigz",
+
+    # Processus & jobs
+    "ps", "top", "htop", "atop", "pgrep", "pkill", "kill", "killall",
+    "nice", "renice", "nohup", "bg", "fg", "jobs", "wait", "watch",
+    "timeout", "time", "strace", "ltrace", "ldd",
+
+    # Réseau
+    "ping", "ping6", "traceroute", "tracepath", "mtr", "netstat", "ss",
+    "ip", "ifconfig", "route", "arp", "dig", "nslookup", "host", "whois",
+    "curl", "wget", "nc", "ncat", "socat", "nmap", "masscan",
+    "tcpdump", "wireshark", "tshark", "iptables", "ip6tables", "nftables",
+    "ufw", "firewalld", "iperf3", "hping3", "fping", "ab", "wrk",
+    "ssh", "scp", "sftp", "rsync", "mosh", "telnet", "ftp",
+
+    # Sécurité
+    "openssl", "ssh-keygen", "ssh-copy-id", "ssh-agent", "ssh-add",
+    "gpg", "gpg2", "age", "pass", "pwgen",
+    "fail2ban", "fail2ban-client", "lynis", "rkhunter", "chkrootkit",
+    "auditd", "ausearch", "auditctl",
+    "hashcat", "john", "hydra", "medusa",
+    "nikto", "sqlmap", "wfuzz", "dirb", "gobuster", "ffuf",
+    "metasploit", "msfconsole", "msfvenom",
+    "certbot", "acme.sh",
+
+    # Certificats & crypto
+    "openssl",  # déjà présent, ok (dédupliqué automatiquement)
+    "cfssl", "easyrsa", "keytool",
+
+    # Système & monitoring
+    "uname", "hostname", "hostnamectl", "uptime", "date", "timedatectl",
+    "free", "vmstat", "iostat", "sar", "mpstat", "pidstat",
+    "lscpu", "lsmem", "lspci", "lsusb", "lsblk", "blkid", "dmidecode",
+    "dmesg", "journalctl", "syslog", "logrotate",
+    "systemctl", "service", "init", "rc-service", "supervisorctl",
+    "crontab", "at", "anacron",
+    "env", "printenv", "export", "set", "unset", "source",
+    "echo", "printf", "read",
+    "history", "alias", "type", "help",
+    "man", "info", "tldr",
+
+    # Utilisateurs & permissions
+    "sudo", "su", "runuser", "doas",
+    "useradd", "usermod", "userdel", "adduser", "deluser",
+    "groupadd", "groupmod", "groupdel",
+    "passwd", "chpasswd", "chage", "shadow",
+    "id", "who", "whoami", "w", "last", "lastlog", "finger",
+    "chmod", "chown", "chgrp", "umask", "acl", "setfacl", "getfacl",
+    "visudo", "sudoers",
+
+    # Disques & filesystems
+    "fdisk", "gdisk", "parted", "gparted", "cfdisk",
+    "mkfs", "mkswap", "swapon", "swapoff",
+    "fsck", "e2fsck", "tune2fs", "resize2fs",
+    "lvm", "pvs", "vgs", "lvs", "pvcreate", "vgcreate", "lvcreate",
+    "mdadm", "zfs", "btrfs",
+    "smartctl", "hdparm", "nvme",
+
+    # Packages & gestionnaires
+    "apt", "apt-get", "apt-cache", "dpkg", "snap",
+    "yum", "dnf", "rpm", "zypper", "pacman", "brew",
+    "pip", "pip3", "pipx", "poetry", "conda", "virtualenv",
+    "npm", "yarn", "pnpm", "npx",
+    "gem", "bundle", "cargo", "go", "mvn", "gradle",
+
+    # Dev / VCS
+    "git", "git-flow", "gh", "gitlab",
+    "make", "cmake", "gcc", "g++", "clang", "gdb",
+    "python", "python3", "ruby", "node", "deno", "php",
+    "vim", "neovim", "nano", "emacs",
+    "tmux", "screen", "byobu",
+    "jq", "yq", "xmllint", "csvkit",
+
+    # Containers & orchestration
+    "docker", "docker-compose", "podman", "buildah", "skopeo",
+    "kubectl", "helm", "minikube", "kind", "k3s",
+    "ansible", "ansible-playbook", "ansible-vault", "ansible-galaxy",
+    "terraform", "terragrunt", "vault",
+    "vagrant", "packer",
+
+    # Cloud
+    "aws", "az", "gcloud", "doctl", "linode-cli",
+
+    # Bases de données
+    "mysql", "mysqldump", "mysqladmin",
+    "psql", "pg_dump", "pg_restore", "pg_basebackup",
+    "redis-cli", "mongodump", "mongorestore",
+    "sqlite3", "influx",
+
+    # Scripting utilitaires
+    "bash", "sh", "zsh", "fish",
+    "test", "expr", "bc", "dc",
+    "base64", "md5sum", "sha1sum", "sha256sum", "sha512sum",
+    "iconv", "locale",
+    "curl",  # déjà présent
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # POWERSHELL
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    # Navigation & fichiers
+    "get-childitem", "set-location", "get-location", "push-location", "pop-location",
+    "get-item", "get-content", "set-content", "add-content", "clear-content",
+    "copy-item", "move-item", "remove-item", "new-item", "rename-item",
+    "test-path", "resolve-path", "split-path", "join-path", "get-acl", "set-acl",
+    "get-itempropertyw",
+
+    # Processus
+    "get-process", "stop-process", "start-process", "wait-process",
+    "get-job", "start-job", "stop-job", "receive-job", "remove-job", "wait-job",
+    "invoke-command", "invoke-expression",
+
+    # Services & démarrage
+    "get-service", "start-service", "stop-service", "restart-service",
+    "set-service", "new-service", "remove-service",
+    "get-scheduledtask", "register-scheduledtask", "unregister-scheduledtask",
+    "start-scheduledtask", "stop-scheduledtask",
+
+    # Réseau
+    "test-netconnection", "test-connection", "resolve-dnsname",
+    "invoke-webrequest", "invoke-restmethod",
+    "get-netadapter", "set-netadapter", "enable-netadapter", "disable-netadapter",
+    "get-netipaddress", "new-netipaddress", "remove-netipaddress",
+    "get-netroute", "new-netroute", "remove-netroute",
+    "get-dnsclientcache", "clear-dnsclientcache",
+    "get-nettcpconnection",
+
+    # Utilisateurs & groupes
     "get-localuser", "new-localuser", "set-localuser", "remove-localuser",
-    "get-localgroup", "add-localgroupmember", "remove-localgroupmember",
+    "enable-localuser", "disable-localuser",
+    "get-localgroup", "new-localgroup", "remove-localgroup",
+    "add-localgroupmember", "remove-localgroupmember", "get-localgroupmember",
+
     # Archives
     "compress-archive", "expand-archive",
-    # Système Windows
-    "get-eventlog", "get-winevent", "get-date", "get-variable",
-    "set-variable", "get-command", "get-help", "get-module", "import-module",
+
+    # Modules & aide
+    "get-module", "import-module", "remove-module",
+    "install-module", "update-module", "uninstall-module", "find-module",
+    "get-command", "get-help", "get-alias", "new-alias", "set-alias",
+    "update-help",
+
+    # Variables & environnement
+    "get-variable", "set-variable", "new-variable", "remove-variable", "clear-variable",
+    "get-psdrive", "new-psdrive", "remove-psdrive",
+    "get-childitem",  # alias env: pour les variables d'env
+
+    # Événements & logs
+    "get-eventlog", "clear-eventlog", "write-eventlog",
+    "get-winevent", "new-winevent",
+
+    # Registre Windows
+    "get-itemproperty", "set-itemproperty", "new-itemproperty", "remove-itemproperty",
+    "get-childitem",  # alias pour HKLM: etc.
+
+    # Sécurité & certificats
     "get-executionpolicy", "set-executionpolicy",
+    "get-certificate", "get-pfxcertificate", "new-selfsignedcertificate",
+    "protect-cmsmessage", "unprotect-cmsmessage",
+    "convertto-securestring", "convertfrom-securestring",
+    "get-credential",
+
     # Traitement de données
-    "convertto-json", "convertfrom-json",
     "select-object", "where-object", "sort-object", "group-object",
-    "measure-object", "foreach-object", "out-file", "out-gridview",
-    "export-csv", "import-csv", "select-string",
+    "measure-object", "foreach-object", "tee-object",
+    "compare-object", "find-object",
+    "out-file", "out-null", "out-gridview", "out-string", "out-host",
+    "format-table", "format-list", "format-wide",
+    "convertto-json", "convertfrom-json",
+    "convertto-csv", "convertfrom-csv",
+    "convertto-html", "convertto-xml",
+    "export-csv", "import-csv",
+    "export-clixml", "import-clixml",
+    "select-string",
+
     # WMI / CIM
-    "get-ciminstance", "invoke-cimmethod",
-    # Utilitaires PS
-    "write-host", "write-output", "read-host", "format-table", "format-list",
-    "compare-object", "get-random", "start-sleep", "clear-host",
+    "get-ciminstance", "invoke-cimmethod", "set-ciminstance",
+    "new-ciminstance", "remove-ciminstance",
+    "get-wmiobject", "invoke-wmimethod",
+
+    # Remoting
+    "enter-pssession", "exit-pssession",
+    "new-pssession", "remove-pssession", "get-pssession",
+    "enable-psremoting", "disable-psremoting",
+    "copy-item",  # remoting
+
+    # Utilitaires
+    "write-host", "write-output", "write-error", "write-warning", "write-verbose",
+    "read-host",
+    "get-date", "set-date",
+    "get-random", "start-sleep",
+    "measure-command", "measure-object",
+    "clear-host",
+    "get-computerinfo", "get-hotfix",
+    "restart-computer", "stop-computer",
+    "get-culture", "get-uiculture",
+    "send-mailmessage",
+    "start-transcript", "stop-transcript",
+
+    # Sécurité PS avancé
+    "get-authenticodesignature", "set-authenticodesignature",
+    "get-filehash",
+
+    # Windows CMD (compatibles PowerShell)
+    "ipconfig", "ping", "tracert", "netsh", "net",
+    "tasklist", "taskkill", "sc", "reg",
+    "icacls", "takeown", "runas",
+    "diskpart", "chkdsk", "sfc", "dism",
+    "bcdedit", "bootrec",
+    "wmic", "winrm", "winrs",
+    "msiexec", "regsvr32",
+    "eventvwr", "perfmon", "resmon",
+    "gpupdate", "gpresult",
+    "certmgr", "certutil",
+    "cipher",
+    "netstat", "nbtstat", "arp", "route", "pathping",
+    "nslookup", "hostname", "systeminfo",
+    "powercfg", "shutdown", "logoff",
+    "clip", "xcopy", "robocopy",
+    "where", "findstr", "more", "type",
+    "attrib", "cacls",
 ]
 
 
@@ -75,15 +265,23 @@ async def lifespan(app: FastAPI):
     # Background: seed tldr for common commands so search-by-description works
     import asyncio
     from app.api.tldr import _do_import
-    async def _seed():
-        for cmd in TLDR_SEED_COMMANDS:
+    async def _seed(commands: list):
+        for cmd in commands:
             try:
                 await _do_import(cmd)
-                await asyncio.sleep(0.3)  # be polite with GitHub
+                await asyncio.sleep(0.25)  # be polite with GitHub
             except Exception as e:
                 logger.debug(f"tldr seed failed for {cmd}: {e}")
         logger.info("tldr seed complete")
-    asyncio.create_task(_seed())
+    # Deduplicate seed list while preserving order
+    _seen: set[str] = set()
+    _deduped = []
+    for _c in TLDR_SEED_COMMANDS:
+        if _c not in _seen:
+            _seen.add(_c)
+            _deduped.append(_c)
+    logger.info(f"Seeding {len(_deduped)} commands...")
+    asyncio.create_task(_seed(_deduped))
 
     # Re-import existing entries to get French descriptions (runs once, quick)
     from app.database import async_session as _session

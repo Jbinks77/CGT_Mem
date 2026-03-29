@@ -3,8 +3,8 @@ import Nav from "@/components/Nav";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "cmdmem — Mémoire de commandes",
-  description: "Capture, enrichit et retrouve tes commandes shell par intention",
+  title: "Jean-Baptiste Chagnat — Ingénieur Cybersécurité",
+  description: "Portfolio de Jean-Baptiste Chagnat, Ingénieur Cybersécurité spécialisé en gestion des vulnérabilités et sécurité des systèmes d'information.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

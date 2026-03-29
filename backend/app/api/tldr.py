@@ -14,7 +14,8 @@ from app.services.embeddings import generate_embedding, build_embedding_text
 
 router = APIRouter()
 
-TLDR_BASE = "https://raw.githubusercontent.com/tldr-pages/tldr/main/pages"
+TLDR_BASE_FR = "https://raw.githubusercontent.com/tldr-pages/tldr/main/pages.fr"
+TLDR_BASE_EN = "https://raw.githubusercontent.com/tldr-pages/tldr/main/pages"
 PLATFORMS = ["common", "linux", "windows", "osx"]
 
 
@@ -46,20 +47,23 @@ def parse_tldr_md(content: str) -> dict:
 # ─── Fetcher ─────────────────────────────────────────────────────────────────
 
 async def fetch_tldr(command: str) -> dict | None:
-    """Try to fetch a tldr page across all platforms. Returns None if not found."""
+    """Try to fetch a tldr page: French first, then English. Returns None if not found."""
     cmd = command.lower().split()[0]
     async with httpx.AsyncClient(timeout=6.0) as client:
-        for platform in PLATFORMS:
-            url = f"{TLDR_BASE}/{platform}/{cmd}.md"
-            try:
-                resp = await client.get(url)
-                if resp.status_code == 200:
-                    data = parse_tldr_md(resp.text)
-                    data["platform"] = platform
-                    data["command"] = cmd
-                    return data
-            except Exception:
-                continue
+        # Try French pages first, then English as fallback
+        for base in [TLDR_BASE_FR, TLDR_BASE_EN]:
+            for platform in PLATFORMS:
+                url = f"{base}/{platform}/{cmd}.md"
+                try:
+                    resp = await client.get(url)
+                    if resp.status_code == 200:
+                        data = parse_tldr_md(resp.text)
+                        data["platform"] = platform
+                        data["command"] = cmd
+                        data["lang"] = "fr" if base == TLDR_BASE_FR else "en"
+                        return data
+                except Exception:
+                    continue
     return None
 
 

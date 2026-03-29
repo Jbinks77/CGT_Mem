@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PROTECTED = ["/search", "/documentation", "/scripts", "/download"];
+const PROTECTED = ["/search", "/documentation", "/scripts", "/download", "/wiki"];
 const PASSWORD = process.env.CMDMEM_PASSWORD ?? "Loulou77310!";
 
 async function sha256(str: string): Promise<string> {
@@ -24,5 +24,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/search/:path*", "/documentation/:path*", "/scripts/:path*", "/download/:path*"],
+  matcher: ["/search/:path*", "/documentation/:path*", "/scripts/:path*", "/download/:path*", "/wiki/:path*"],
 };

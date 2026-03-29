@@ -130,3 +130,61 @@ export async function addScript(payload: ScriptPayload): Promise<DocEntry> {
   if (!res.ok) throw new Error("Failed to add script");
   return res.json();
 }
+
+// ─── Wiki ─────────────────────────────────────────────────────────────────
+
+export interface WikiDoc {
+  id: number;
+  title: string;
+  content: string;  // TipTap JSON stringified
+  cover_color: string;
+  tags: string[];
+  section: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WikiDocPayload {
+  title: string;
+  content?: string;
+  cover_color?: string;
+  tags?: string[];
+  section?: string;
+}
+
+export async function listWikiDocs(): Promise<WikiDoc[]> {
+  const res = await fetch(`${API_BASE}/wiki`);
+  if (!res.ok) throw new Error("Failed to load wiki");
+  return res.json();
+}
+
+export async function getWikiDoc(id: number): Promise<WikiDoc> {
+  const res = await fetch(`${API_BASE}/wiki/${id}`);
+  if (!res.ok) throw new Error("Wiki document not found");
+  return res.json();
+}
+
+export async function createWikiDoc(payload: WikiDocPayload): Promise<WikiDoc> {
+  const res = await fetch(`${API_BASE}/wiki`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to create wiki document");
+  return res.json();
+}
+
+export async function updateWikiDoc(id: number, payload: Partial<WikiDocPayload>): Promise<WikiDoc> {
+  const res = await fetch(`${API_BASE}/wiki/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to update wiki document");
+  return res.json();
+}
+
+export async function deleteWikiDoc(id: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/wiki/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete wiki document");
+}

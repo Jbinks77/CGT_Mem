@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 
 from app.database import init_db
-from app.api import commands, search, documentation, stats, scripts, download, tldr
+from app.api import commands, search, documentation, stats, scripts, download, tldr, wiki
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -77,6 +77,7 @@ app.include_router(stats.router, prefix="/api", tags=["stats"])
 app.include_router(scripts.router, prefix="/api", tags=["scripts"])
 app.include_router(download.router, prefix="/api", tags=["download"])
 app.include_router(tldr.router, prefix="/api", tags=["tldr"])
+app.include_router(wiki.router, prefix="/api", tags=["wiki"])
 
 
 @app.get("/api/health")

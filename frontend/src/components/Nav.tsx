@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 const privateLinks = [
   { href: "/search", label: "Recherche" },
   { href: "/documentation", label: "Documentation" },
+  { href: "/wiki", label: "Wiki" },
   { href: "/scripts", label: "Scripts" },
   { href: "/download", label: "Téléchargement" },
 ];

@@ -24,9 +24,7 @@ frontend/.next/
 frontend/out/
 .next/
 
-# ── Vidéo (trop lourde pour git) ────────
-frontend/public/bg.mp4
-frontend/public/*.mp4
+# ── Vidéos lourdes (la bg.mp4 compressée est ok) ──
 frontend/public/*.webm
 
 # ── Fly.io ──────────────────────────────

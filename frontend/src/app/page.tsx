@@ -5,7 +5,7 @@ import SearchBar from "@/components/SearchBar";
 import CommandCard from "@/components/CommandCard";
 import { search, getStats, type SearchResult, type Stats } from "@/lib/api";
 
-const VIDEO_URL = process.env.NEXT_PUBLIC_VIDEO_URL || "/bg.mp4";
+const VIDEO_URL = "/bg.mp4";
 
 export default function Home() {
   const [results, setResults] = useState<SearchResult[]>([]);

@@ -5,10 +5,11 @@ import CommandCard from "@/components/CommandCard";
 import { getDocumentation, getStats, type DocEntry, type Stats } from "@/lib/api";
 
 const SECTIONS = [
-  { key: null, label: "Tout", icon: "#", color: "var(--accent2)" },
-  { key: "linux", label: "Linux", icon: "$", color: "#10b981" },
-  { key: "windows", label: "Windows", icon: ">", color: "#38bdf8" },
-  { key: "automation", label: "Automatisation", icon: "@", color: "#f59e0b" },
+  { key: null,         label: "Tout",           icon: "#",  color: "var(--accent2)" },
+  { key: "linux",      label: "Linux",           icon: "$",  color: "#10b981" },
+  { key: "windows",    label: "Windows (cmd)",   icon: ">",  color: "#38bdf8" },
+  { key: "powershell", label: "PowerShell",      icon: "PS", color: "#5c9bd6" },
+  { key: "automation", label: "Automatisation",  icon: "@",  color: "#f59e0b" },
 ] as const;
 
 export default function DocumentationPage() {
@@ -50,7 +51,7 @@ export default function DocumentationPage() {
               <div style={{ display: "flex", gap: 24 }}>
                 {Object.entries(stats.by_section || {}).map(([sec, count]) => (
                   <div key={sec} style={{ textAlign: "right" }}>
-                    <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, color: sec === "linux" ? "#10b981" : sec === "windows" ? "#38bdf8" : "#f59e0b" }}>
+                    <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, color: sec === "linux" ? "#10b981" : sec === "windows" ? "#38bdf8" : sec === "powershell" ? "#5c9bd6" : "#f59e0b" }}>
                       {count as number}
                     </div>
                     <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em", textTransform: "uppercase" }}>

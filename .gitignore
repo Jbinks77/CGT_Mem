@@ -1,0 +1,38 @@
+# ── Python ──────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# ── Data (SQLite local, ne pas commiter) ──
+backend/data/
+*.db
+
+# ── Env ─────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Node / Next.js ───────────────────────
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+.next/
+
+# ── Vidéo (trop lourde pour git) ────────
+frontend/public/bg.mp4
+frontend/public/*.mp4
+frontend/public/*.webm
+
+# ── Fly.io ──────────────────────────────
+.fly/
+
+# ── OS ──────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log

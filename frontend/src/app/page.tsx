@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react"; // useRef kept for Counter/SkillBar
 import { useRouter } from "next/navigation";
+import CyberBackground from "@/components/CyberBackground";
 
 /* ─── CV Data ────────────────────────────────────────────────────────────────── */
 
@@ -158,7 +159,6 @@ function SkillBar({ name, level, color }: { name: string; level: number; color: 
 
 /* ─── Main Component ─────────────────────────────────────────────────────── */
 export default function Portfolio() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -187,105 +187,6 @@ export default function Portfolio() {
         });
       } catch {}
     })();
-  }, []);
-
-  /* ── Three.js Network ────────────────────────────────────────────────────── */
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    let animId: number;
-    let rendererObj: { dispose: () => void } | null = null;
-    let mouseX = 0, mouseY = 0;
-    const onMouseMove = (e: MouseEvent) => {
-      mouseX = (e.clientX / window.innerWidth - 0.5) * 40;
-      mouseY = -(e.clientY / window.innerHeight - 0.5) * 24;
-    };
-    window.addEventListener("mousemove", onMouseMove);
-    (async () => {
-      try {
-        const THREE = await import("three");
-        const canvas = canvasRef.current!;
-        const W = canvas.clientWidth, H = canvas.clientHeight;
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 1000);
-        camera.position.z = 22;
-        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-        renderer.setSize(W, H);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.setClearColor(0x000000, 0);
-        rendererObj = renderer;
-        const tc = document.createElement("canvas");
-        tc.width = tc.height = 64;
-        const tctx = tc.getContext("2d")!;
-        const grd = tctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-        grd.addColorStop(0, "rgba(0,212,255,1)");
-        grd.addColorStop(0.4, "rgba(0,212,255,0.4)");
-        grd.addColorStop(1, "rgba(0,212,255,0)");
-        tctx.fillStyle = grd;
-        tctx.fillRect(0, 0, 64, 64);
-        const ptex = new THREE.CanvasTexture(tc);
-        const N = 90;
-        const pos = new Float32Array(N * 3);
-        const vel: { x: number; y: number; z: number }[] = [];
-        for (let i = 0; i < N; i++) {
-          pos[i*3]   = (Math.random() - 0.5) * 38;
-          pos[i*3+1] = (Math.random() - 0.5) * 24;
-          pos[i*3+2] = (Math.random() - 0.5) * 8;
-          vel.push({ x: (Math.random()-0.5)*0.005, y: (Math.random()-0.5)*0.005, z: 0 });
-        }
-        const pGeo = new THREE.BufferGeometry();
-        const pAttr = new THREE.BufferAttribute(pos, 3);
-        pGeo.setAttribute("position", pAttr);
-        const pMat = new THREE.PointsMaterial({ size: 0.22, map: ptex, transparent: true, opacity: 0.7, depthWrite: false, blending: THREE.AdditiveBlending });
-        scene.add(new THREE.Points(pGeo, pMat));
-        const lGeo = new THREE.BufferGeometry();
-        const lMat = new THREE.LineBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending });
-        const lines = new THREE.LineSegments(lGeo, lMat);
-        scene.add(lines);
-        const t0 = Date.now();
-        const animate = () => {
-          animId = requestAnimationFrame(animate);
-          const t = (Date.now() - t0) * 0.001;
-          for (let i = 0; i < N; i++) {
-            pos[i*3] += vel[i].x; pos[i*3+1] += vel[i].y;
-            if (Math.abs(pos[i*3]) > 19) vel[i].x *= -1;
-            if (Math.abs(pos[i*3+1]) > 12) vel[i].y *= -1;
-            const dx = pos[i*3] - mouseX, dy = pos[i*3+1] - mouseY;
-            const d = Math.sqrt(dx*dx + dy*dy);
-            if (d < 5 && d > 0.01) {
-              const f = ((5-d)/5)*0.018;
-              vel[i].x += (dx/d)*f; vel[i].y += (dy/d)*f;
-              vel[i].x *= 0.98; vel[i].y *= 0.98;
-            }
-          }
-          pAttr.needsUpdate = true;
-          const lp: number[] = [];
-          for (let i = 0; i < N; i++)
-            for (let j = i+1; j < N; j++) {
-              const ddx = pos[i*3]-pos[j*3], ddy = pos[i*3+1]-pos[j*3+1];
-              if (Math.sqrt(ddx*ddx+ddy*ddy) < 5) lp.push(pos[i*3],pos[i*3+1],0,pos[j*3],pos[j*3+1],0);
-            }
-          lGeo.setAttribute("position", new THREE.Float32BufferAttribute(lp, 3));
-          camera.position.x = Math.sin(t*0.06)*0.8;
-          camera.position.y = Math.cos(t*0.04)*0.5;
-          camera.lookAt(0,0,0);
-          renderer.render(scene, camera);
-        };
-        animate();
-        const onResize = () => {
-          const nW = canvas.clientWidth, nH = canvas.clientHeight;
-          camera.aspect = nW/nH; camera.updateProjectionMatrix();
-          renderer.setSize(nW, nH);
-        };
-        window.addEventListener("resize", onResize);
-        (rendererObj as any)._cleanup = () => window.removeEventListener("resize", onResize);
-      } catch {}
-    })();
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("mousemove", onMouseMove);
-      (rendererObj as any)?._cleanup?.();
-      rendererObj?.dispose();
-    };
   }, []);
 
   /* ── Scan line animation ─────────────────────────────────────────────────── */
@@ -336,8 +237,8 @@ export default function Portfolio() {
         transition: "none",
       }} />
 
-      {/* ── Canvas ────────────────────────────────────────────────────────────── */}
-      <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, zIndex: 0, width: "100%", height: "100%", pointerEvents: "none" }} />
+      {/* ── Cyber Background ─────────────────────────────────────────────────── */}
+      <CyberBackground />
 
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* HERO SECTION                                                          */}

@@ -53,19 +53,24 @@ export default function Nav() {
         </Link>
 
         {/* Private nav links */}
-        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+        <div style={{
+          display: "flex", gap: 2, alignItems: "center",
+          overflowX: "auto", maxWidth: "70vw",
+          msOverflowStyle: "none", scrollbarWidth: "none",
+        }}>
           {authed && privateLinks.map((l) => {
             const active = pathname === l.href || pathname.startsWith(l.href + "/");
             return (
-              <Link key={l.href} href={l.href} style={{ textDecoration: "none" }}>
+              <Link key={l.href} href={l.href} style={{ textDecoration: "none", flexShrink: 0 }}>
                 <span style={{
-                  fontFamily: "var(--font-body)", fontSize: 13,
+                  fontFamily: "var(--font-body)", fontSize: 12,
                   fontWeight: active ? 500 : 400,
                   color: active ? "var(--text)" : "var(--muted)",
-                  padding: "6px 14px", borderRadius: 8,
+                  padding: "5px 11px", borderRadius: 8,
                   background: active ? "rgba(108,99,255,0.1)" : "transparent",
                   border: `1px solid ${active ? "rgba(108,99,255,0.2)" : "transparent"}`,
-                  transition: "all 0.2s", display: "block", letterSpacing: "0.01em",
+                  transition: "all 0.2s", display: "block",
+                  whiteSpace: "nowrap",
                 }}>
                   {l.label}
                 </span>

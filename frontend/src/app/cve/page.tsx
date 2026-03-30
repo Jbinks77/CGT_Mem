@@ -533,35 +533,9 @@ export default function CVEPage() {
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {/* CERT-FR section */}
-                {filtered.some(i => i.source === "cert-fr") && (
-                  <>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4, marginTop: 4 }}>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#6c63ff", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                        🇫🇷 CERT-FR — Avis & Alertes
-                      </span>
-                      <div style={{ flex: 1, height: 1, background: "rgba(108,99,255,0.15)" }} />
-                    </div>
-                    {filtered.filter(i => i.source === "cert-fr").map(item => (
-                      <CveCard key={item.id} item={item} keywords={kwActive ? keywords : []} />
-                    ))}
-                  </>
-                )}
-
-                {/* CISA KEV section */}
-                {filtered.some(i => i.source === "cisa-kev") && (
-                  <>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, marginBottom: 4 }}>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#ff9800", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                        🇺🇸 CISA KEV — Vulnérabilités activement exploitées
-                      </span>
-                      <div style={{ flex: 1, height: 1, background: "rgba(255,152,0,0.15)" }} />
-                    </div>
-                    {filtered.filter(i => i.source === "cisa-kev").map(item => (
-                      <CveCard key={item.id} item={item} keywords={kwActive ? keywords : []} />
-                    ))}
-                  </>
-                )}
+                {filtered.map(item => (
+                  <CveCard key={`${item.source}-${item.id}`} item={item} keywords={kwActive ? keywords : []} />
+                ))}
               </div>
             )}
           </div>

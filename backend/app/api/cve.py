@@ -120,6 +120,13 @@ async def _fetch_cert_fr() -> list[dict]:
     seen: set = set()
     deduped = [it for it in items if not (it["id"] in seen or seen.add(it["id"]))]  # type: ignore
 
+    # Trier du plus récent au plus ancien
+    def _sort_key(item: dict):
+        dt = _parse_date(item.get("published", ""))
+        return dt if dt else datetime.min.replace(tzinfo=timezone.utc)
+
+    deduped.sort(key=_sort_key, reverse=True)
+
     _cache["cert_fr"] = (datetime.now(), deduped[:60])
     return _cache["cert_fr"][1]
 
@@ -214,6 +221,13 @@ async def get_cve_feed(days: int = 30, keywords: str = ""):
             if any(kw in (i["title"] + " " + i["description"]).lower() for kw in kws)
         ]
 
+    # Trier toutes les sources par date décroissante (les plus récentes en premier)
+    def _sort_key(item: dict):
+        dt = _parse_date(item.get("published", ""))
+        return dt if dt else datetime.min.replace(tzinfo=timezone.utc)
+
+    all_items.sort(key=_sort_key, reverse=True)
+
     return {
         "items":          all_items,
         "total":          len(all_items),
@@ -244,6 +258,12 @@ async def search_cves(q: str = "", severity: str = "", source: str = ""):
         all_items = [i for i in all_items if i["severity"] == severity.lower()]
     if source:
         all_items = [i for i in all_items if i["source"] == source.lower()]
+
+    def _sort_key(item: dict):
+        dt = _parse_date(item.get("published", ""))
+        return dt if dt else datetime.min.replace(tzinfo=timezone.utc)
+
+    all_items.sort(key=_sort_key, reverse=True)
 
     return {"items": all_items, "total": len(all_items)}
 

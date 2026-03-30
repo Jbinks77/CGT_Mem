@@ -13,9 +13,10 @@ const SEVERITY_CONFIG: Record<CveSeverity, { label: string; color: string; bg: s
   unknown:  { label: "Inconnu",   color: "#888",    bg: "rgba(136,136,136,0.08)", icon: "⚪" },
 };
 
-const SOURCE_CONFIG = {
-  "cert-fr": { label: "CERT-FR 🇫🇷", color: "#6c63ff", bg: "rgba(108,99,255,0.12)" },
-  "nvd":     { label: "NVD",         color: "#00e5ff", bg: "rgba(0,229,255,0.08)"  },
+const SOURCE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  "cert-fr":  { label: "CERT-FR 🇫🇷", color: "#6c63ff", bg: "rgba(108,99,255,0.12)" },
+  "cisa-kev": { label: "CISA KEV 🇺🇸", color: "#ff9800", bg: "rgba(255,152,0,0.1)"   },
+  "nvd":      { label: "NVD",          color: "#00e5ff", bg: "rgba(0,229,255,0.08)"  },
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -23,6 +24,7 @@ const TYPE_COLORS: Record<string, string> = {
   avis:   "#6c63ff",
   ioc:    "#ff9800",
   cve:    "#00e5ff",
+  kev:    "#ff3d00",
 };
 
 const DEFAULT_KEYWORDS = ["openssl", "windows", "linux", "apache", "nginx", "ssh", "ssl", "tls"];
@@ -197,7 +199,7 @@ export default function CVEPage() {
   const [search, setSearch]         = useState("");
   const [severityFilter, setSeverityFilter] = useState<string>("");
   const [sourceFilter, setSourceFilter]     = useState<string>("");
-  const [days, setDays]             = useState(7);
+  const [days, setDays]             = useState(30);
 
   // Keywords watchlist (persisted in localStorage)
   const [keywords, setKeywords]     = useState<string[]>([]);
@@ -350,7 +352,7 @@ export default function CVEPage() {
             {/* Période */}
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--muted)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>Période</div>
-              {[7, 14, 30].map(d => (
+              {[7, 14, 30, 60, 90].map(d => (
                 <button key={d} onClick={() => setDays(d)}
                   style={{
                     display: "block", width: "100%", textAlign: "left",
@@ -361,7 +363,7 @@ export default function CVEPage() {
                     fontFamily: "var(--font-body)", fontSize: 13,
                     cursor: "pointer", transition: "all 0.15s",
                   }}>
-                  {d === 7 ? "7 derniers jours" : d === 14 ? "14 derniers jours" : "30 derniers jours"}
+                  {{7:"7 derniers jours",14:"14 derniers jours",30:"30 derniers jours",60:"60 derniers jours",90:"90 derniers jours"}[d]}
                 </button>
               ))}
             </div>
@@ -392,9 +394,9 @@ export default function CVEPage() {
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--muted)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>Source</div>
               {[
-                { key: "",        label: "Toutes" },
-                { key: "cert-fr", label: "CERT-FR 🇫🇷" },
-                { key: "nvd",     label: "NVD" },
+                { key: "",          label: "Toutes" },
+                { key: "cert-fr",   label: "CERT-FR 🇫🇷" },
+                { key: "cisa-kev",  label: "CISA KEV 🇺🇸" },
               ].map(s => (
                 <button key={s.key} onClick={() => setSourceFilter(s.key)}
                   style={{
@@ -546,16 +548,16 @@ export default function CVEPage() {
                   </>
                 )}
 
-                {/* NVD section */}
-                {filtered.some(i => i.source === "nvd") && (
+                {/* CISA KEV section */}
+                {filtered.some(i => i.source === "cisa-kev") && (
                   <>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, marginBottom: 4 }}>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#00e5ff", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                        NVD — CVEs Critiques / Élevées
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#ff9800", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                        🇺🇸 CISA KEV — Vulnérabilités activement exploitées
                       </span>
-                      <div style={{ flex: 1, height: 1, background: "rgba(0,229,255,0.12)" }} />
+                      <div style={{ flex: 1, height: 1, background: "rgba(255,152,0,0.15)" }} />
                     </div>
-                    {filtered.filter(i => i.source === "nvd").map(item => (
+                    {filtered.filter(i => i.source === "cisa-kev").map(item => (
                       <CveCard key={item.id} item={item} keywords={kwActive ? keywords : []} />
                     ))}
                   </>

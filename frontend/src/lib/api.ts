@@ -192,7 +192,7 @@ export async function deleteWikiDoc(id: number): Promise<void> {
 // ─── Veille CVE ──────────────────────────────────────────────────────────────
 
 export type CveSeverity = "critical" | "high" | "medium" | "low" | "unknown";
-export type CveSource   = "cert-fr" | "nvd";
+export type CveSource   = "cert-fr" | "nvd" | "cisa-kev";
 
 export interface CveItem {
   id:          string;

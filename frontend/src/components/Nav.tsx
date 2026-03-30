@@ -5,11 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 const privateLinks = [
-  { href: "/search", label: "Recherche" },
+  { href: "/search",        label: "Recherche" },
   { href: "/documentation", label: "Documentation" },
-  { href: "/wiki", label: "Wiki" },
-  { href: "/scripts", label: "Scripts" },
-  { href: "/download", label: "Téléchargement" },
+  { href: "/wiki",          label: "Wiki" },
+  { href: "/cve",           label: "Veille CVE" },
+  { href: "/scripts",       label: "Scripts" },
+  { href: "/download",      label: "Téléchargement" },
 ];
 
 function getCookie(name: string): string | null {

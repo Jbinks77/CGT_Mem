@@ -188,3 +188,57 @@ export async function deleteWikiDoc(id: number): Promise<void> {
   const res = await fetch(`${API_BASE}/wiki/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Failed to delete wiki document");
 }
+
+// ─── Veille CVE ──────────────────────────────────────────────────────────────
+
+export type CveSeverity = "critical" | "high" | "medium" | "low" | "unknown";
+export type CveSource   = "cert-fr" | "nvd";
+
+export interface CveItem {
+  id:          string;
+  title:       string;
+  description: string;
+  link:        string;
+  published:   string;
+  source:      CveSource;
+  type:        string;
+  type_label:  string;
+  severity:    CveSeverity;
+  cvss_score:  number | null;
+  lang:        string;
+}
+
+export interface CveFeed {
+  items:          CveItem[];
+  total:          number;
+  cert_fr_count:  number;
+  nvd_count:      number;
+  refreshed_at:   string;
+}
+
+export async function getCveFeed(days = 7, keywords = ""): Promise<CveFeed> {
+  const p = new URLSearchParams({ days: String(days) });
+  if (keywords) p.set("keywords", keywords);
+  const res = await fetch(`${API_BASE}/cve/feed?${p}`);
+  if (!res.ok) throw new Error("Failed to load CVE feed");
+  return res.json();
+}
+
+export async function searchCves(
+  q: string,
+  severity = "",
+  source = ""
+): Promise<{ items: CveItem[]; total: number }> {
+  const p = new URLSearchParams({ q });
+  if (severity) p.set("severity", severity);
+  if (source)   p.set("source", source);
+  const res = await fetch(`${API_BASE}/cve/search?${p}`);
+  if (!res.ok) throw new Error("CVE search failed");
+  return res.json();
+}
+
+export async function refreshCveCache(): Promise<{ status: string; cert_fr: number; nvd: number; total: number }> {
+  const res = await fetch(`${API_BASE}/cve/refresh`, { method: "POST" });
+  if (!res.ok) throw new Error("CVE refresh failed");
+  return res.json();
+}

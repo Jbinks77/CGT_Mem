@@ -3,7 +3,12 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "env": {
-    "BACKEND_URL": "https://cmdmem-backend.fly.dev"
-  }
+  "redirects": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "chagnat.fr" }],
+      "destination": "https://www.chagnat.fr",
+      "permanent": true
+    }
+  ]
 }

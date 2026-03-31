@@ -13,12 +13,23 @@ import json
 import re
 import os
 import socket
+import logging
 
 # ── Config ────────────────────────────────────────────────────────────────────
-CMDMEM_URL   = os.environ.get("CMDMEM_URL", "http://46.225.130.235:8000")
+CMDMEM_URL   = os.environ.get("CMDMEM_URL", "https://api.chagnat.fr")
 CONFIG_DIR   = os.path.join(os.path.expanduser("~"), ".cmdmem")
 SESSIONS_FILE = os.path.join(CONFIG_DIR, "sessions.json")
 os.makedirs(CONFIG_DIR, exist_ok=True)
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+LOG_FILE = os.path.join(CONFIG_DIR, "debug.log")
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+log = logging.getLogger("cmdmem")
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -472,12 +483,18 @@ class SSHTab(ctk.CTkFrame):
 
     # ── cmdmem push ───────────────────────────────────────────────────────────
     def _push(self, cmd, host, user):
+        url = f"{CMDMEM_URL}/api/commands/ingest"
+        payload = {"command": cmd, "shell": "ssh", "hostname": host, "username": user}
         try:
-            requests.post(f"{CMDMEM_URL}/api/commands/ingest",
-                          json={"command": cmd, "shell": "ssh",
-                                "hostname": host, "username": user}, timeout=4)
-            if self.on_sync: self.after(0, lambda: self.on_sync(True))
-        except:
+            log.debug("POST %s — cmd=%r host=%s user=%s", url, cmd, host, user)
+            resp = requests.post(url, json=payload, timeout=6)
+            log.debug("Response %s: %s", resp.status_code, resp.text[:200])
+            ok = resp.ok
+            if not ok:
+                log.warning("Ingest rejected: %s %s", resp.status_code, resp.text[:200])
+            if self.on_sync: self.after(0, lambda: self.on_sync(ok))
+        except Exception as e:
+            log.error("Ingest failed: %s", e, exc_info=True)
             if self.on_sync: self.after(0, lambda: self.on_sync(False))
 
 # ── Custom tab bar ────────────────────────────────────────────────────────────
@@ -799,8 +816,12 @@ class App(ctk.CTk):
     def _ping_cmdmem(self):
         def check():
             try:
-                ok = requests.get(f"{CMDMEM_URL}/api/health", timeout=3).ok
-            except: ok = False
+                resp = requests.get(f"{CMDMEM_URL}/api/health", timeout=3)
+                ok = resp.ok
+                log.debug("Health check: %s", resp.status_code)
+            except Exception as e:
+                log.error("Health check failed: %s", e)
+                ok = False
             t = "● cmdmem" if ok else "● hors ligne"
             c = GREEN if ok else RED
             self.after(0, lambda: self.ping_lbl.configure(text=t, text_color=c))

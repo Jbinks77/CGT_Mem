@@ -1,12 +1,11 @@
 """
 Service d'annotation automatique du code par IA (Groq - gratuit).
-Détecte les blocs de code dans le contenu wiki (TipTap JSON) ou les scripts
-bruts, appelle Groq pour ajouter des commentaires en français, et retourne
-le contenu mis à jour.
+Détecte les blocs de code dans le contenu wiki (TipTap JSON),
+insère un paragraphe de commentaire jaune AU-DESSUS de chaque bloc,
+sans jamais modifier le code lui-même.
 """
 import json
 import logging
-from typing import Optional
 from app.config import get_settings
 
 log = logging.getLogger("cmdmem.ai")
@@ -38,40 +37,35 @@ def _get_groq():
                 raise ValueError("GROQ_API_KEY non configuré dans .env")
             _groq_client = Groq(api_key=settings.groq_api_key)
         except ImportError:
-            raise RuntimeError("La librairie 'groq' n'est pas installée. Relancez : pip install groq")
+            raise RuntimeError("La librairie 'groq' n'est pas installée.")
     return _groq_client
 
 
-# ── Prompt ────────────────────────────────────────────────────────────────────
-PROMPT_TEMPLATE = """Tu es un expert en {language}. Analyse ce code et ajoute des commentaires en français pour expliquer les parties importantes.
+# ── Prompt : résumé court, ne touche PAS au code ─────────────────────────────
+PROMPT_COMMENT_ONLY = """Tu es un expert en {language}.
+Génère un commentaire court (2-4 lignes MAX) en français qui résume ce que fait ce code.
+Chaque ligne DOIT commencer par "# ".
+Ne répète PAS le code. Ne l'explique PAS ligne par ligne.
+Réponds UNIQUEMENT avec les lignes de commentaire, rien d'autre.
 
-Règles strictes :
-- Commentaires en français uniquement
-- Place les commentaires AU-DESSUS de la ligne concernée (jamais en fin de ligne)
-- Commente seulement les parties importantes : fonctions, blocs logiques, opérations non triviales
-- Ne commente PAS chaque ligne (trop verbeux)
-- Garde le code original INTACT, ajoute seulement des commentaires
-- Si le code a déjà des commentaires en français, améliore-les ou garde-les
-- Réponds UNIQUEMENT avec le code commenté, sans explication, sans balises markdown
-
-Code à commenter :
+Code :
 {code}"""
 
 
-def _call_groq(code: str, language: str) -> str:
-    """Appelle Groq pour commenter le code. Retourne le code commenté."""
+def _call_groq_comment(code: str, language: str) -> str:
+    """Appelle Groq pour obtenir un commentaire résumé. Ne retourne que le commentaire."""
     client = _get_groq()
-    prompt = PROMPT_TEMPLATE.format(language=language or "bash", code=code)
+    prompt = PROMPT_COMMENT_ONLY.format(language=language or "bash", code=code)
 
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.2,
-        max_tokens=4096,
+        max_tokens=512,
     )
     result = response.choices[0].message.content.strip()
 
-    # Retirer d'éventuelles balises markdown que le modèle pourrait ajouter
+    # Nettoyer d'éventuelles balises markdown
     if result.startswith("```"):
         lines = result.split("\n")
         result = "\n".join(lines[1:-1]) if lines[-1].strip() == "```" else "\n".join(lines[1:])
@@ -79,52 +73,91 @@ def _call_groq(code: str, language: str) -> str:
     return result
 
 
-# ── TipTap JSON processing ────────────────────────────────────────────────────
-def _process_tiptap_node(node: dict) -> tuple[dict, bool]:
+# ── TipTap helpers ────────────────────────────────────────────────────────────
+
+def _make_ai_comment_paragraph(text: str) -> dict:
+    """Crée un nœud TipTap paragraphe avec texte jaune (commentaire IA)."""
+    return {
+        "type": "paragraph",
+        "content": [
+            {
+                "type": "text",
+                "marks": [
+                    {"type": "textStyle", "attrs": {"color": "#fbbf24"}}
+                ],
+                "text": text,
+            }
+        ],
+    }
+
+
+def _is_ai_comment_paragraph(node: dict) -> bool:
     """
-    Parcourt récursivement le JSON TipTap.
-    Retourne (nœud modifié, was_modified).
+    Détecte si un nœud est un commentaire IA :
+    paragraphe dont le premier texte est de couleur #fbbf24 et commence par '# '.
     """
+    if node.get("type") != "paragraph":
+        return False
+    content = node.get("content", [])
+    if not content:
+        return False
+    first = content[0]
+    if first.get("type") != "text":
+        return False
+    for mark in first.get("marks", []):
+        if mark.get("type") == "textStyle":
+            if mark.get("attrs", {}).get("color") == "#fbbf24":
+                if first.get("text", "").startswith("# "):
+                    return True
+    return False
+
+
+def _process_doc_content(nodes: list) -> tuple[list, bool]:
+    """
+    Parcourt les nœuds de premier niveau du document TipTap.
+    Pour chaque codeBlock non encore commenté, insère un paragraphe jaune au-dessus.
+    Ne modifie JAMAIS le contenu du codeBlock lui-même.
+    """
+    new_nodes: list = []
     modified = False
 
-    if node.get("type") == "codeBlock":
-        # Extraire le texte du bloc de code
-        content_nodes = node.get("content", [])
-        code = "".join(n.get("text", "") for n in content_nodes if n.get("type") == "text")
-        language = node.get("attrs", {}).get("language") or "text"
+    for node in nodes:
+        if node.get("type") == "codeBlock":
+            # Vérifie si le nœud précédent est déjà un commentaire IA
+            already_commented = bool(new_nodes) and _is_ai_comment_paragraph(new_nodes[-1])
 
-        if code.strip():
-            try:
-                commented = _call_groq(code, language)
-                if commented and commented != code:
-                    node = {
-                        **node,
-                        "content": [{"type": "text", "text": commented}],
-                    }
-                    modified = True
-                    log.info("Bloc %s commenté (%d → %d chars)", language, len(code), len(commented))
-            except Exception as e:
-                log.error("Erreur commentaire bloc %s: %s", language, e)
+            if not already_commented:
+                code_nodes = node.get("content", [])
+                code = "".join(
+                    n.get("text", "") for n in code_nodes if n.get("type") == "text"
+                )
+                language = node.get("attrs", {}).get("language") or "text"
 
-        return node, modified
+                if code.strip():
+                    try:
+                        comment_text = _call_groq_comment(code, language)
+                        if comment_text:
+                            # Insérer une ligne jaune par ligne de commentaire
+                            for line in comment_text.split("\n"):
+                                line = line.strip()
+                                if line:
+                                    new_nodes.append(_make_ai_comment_paragraph(line))
+                            modified = True
+                            log.info("Wiki #codeBlock commenté (%s, %d chars)", language, len(code))
+                    except Exception as e:
+                        log.error("Erreur commentaire codeBlock (%s): %s", language, e)
 
-    # Récursion sur les enfants
-    if "content" in node and isinstance(node["content"], list):
-        new_children = []
-        for child in node["content"]:
-            new_child, child_modified = _process_tiptap_node(child)
-            new_children.append(new_child)
-            modified = modified or child_modified
-        if modified:
-            node = {**node, "content": new_children}
+        new_nodes.append(node)
 
-    return node, modified
+    return new_nodes, modified
 
+
+# ── API publique ──────────────────────────────────────────────────────────────
 
 def comment_wiki_content(doc_id: int, content: str, db_update_fn) -> None:
     """
-    Tâche de fond : parse le JSON TipTap, commente les blocs de code,
-    appelle db_update_fn(new_content) si modifié.
+    Tâche de fond : insère des commentaires jaunes au-dessus des blocs de code
+    non encore annotés. Ne modifie jamais le code lui-même.
     """
     _wiki_status[doc_id] = "processing"
     try:
@@ -135,13 +168,18 @@ def comment_wiki_content(doc_id: int, content: str, db_update_fn) -> None:
         try:
             tiptap = json.loads(content)
         except json.JSONDecodeError:
-            # Contenu en texte brut → pas de bloc de code à traiter
             _wiki_status[doc_id] = "none"
             return
 
-        new_tiptap, was_modified = _process_tiptap_node(tiptap)
+        doc_content = tiptap.get("content", [])
+        if not isinstance(doc_content, list):
+            _wiki_status[doc_id] = "none"
+            return
+
+        new_content, was_modified = _process_doc_content(doc_content)
 
         if was_modified:
+            new_tiptap = {**tiptap, "content": new_content}
             db_update_fn(json.dumps(new_tiptap, ensure_ascii=False))
             log.info("Wiki #%d mis à jour avec commentaires IA", doc_id)
 
@@ -155,6 +193,7 @@ def comment_wiki_content(doc_id: int, content: str, db_update_fn) -> None:
 def comment_script(doc_id: int, script: str, language: str, db_update_fn) -> None:
     """
     Tâche de fond : commente un script brut et appelle db_update_fn(new_script).
+    Ajoute les commentaires AU-DESSUS des blocs logiques, sans modifier le code.
     """
     _script_status[doc_id] = "processing"
     try:
@@ -162,9 +201,11 @@ def comment_script(doc_id: int, script: str, language: str, db_update_fn) -> Non
             _script_status[doc_id] = "none"
             return
 
-        commented = _call_groq(script, language)
+        commented = _call_groq_comment(script, language)
         if commented and commented != script:
-            db_update_fn(commented)
+            # Pour les scripts, on préfixe avec le commentaire IA
+            new_script = commented + "\n\n" + script
+            db_update_fn(new_script)
             log.info("Script #%d commenté", doc_id)
 
         _script_status[doc_id] = "done"

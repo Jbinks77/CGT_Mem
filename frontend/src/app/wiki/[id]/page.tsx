@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { getWikiDoc, updateWikiDoc, WikiDoc } from "@/lib/api";
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? "https://api.chagnat.fr";
 
 const RichEditor = dynamic(() => import("@/components/RichEditor"), { ssr: false });
 
@@ -33,6 +35,8 @@ export default function WikiDocPage() {
   const [coverColor, setCoverColor] = useState("#6c63ff");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [aiStatus, setAiStatus] = useState<"none"|"processing"|"done"|"error">("none");
+  const aiPollRef = useRef<ReturnType<typeof setInterval>|null>(null);
 
   useEffect(() => {
     getWikiDoc(Number(id))
@@ -59,6 +63,27 @@ export default function WikiDocPage() {
     setEditing(false);
   };
 
+  const startAiPolling = (docId: number) => {
+    setAiStatus("processing");
+    if (aiPollRef.current) clearInterval(aiPollRef.current);
+    aiPollRef.current = setInterval(async () => {
+      try {
+        const r = await fetch(`${API}/api/wiki/${docId}/ai-status`);
+        const data = await r.json();
+        if (data.status === "done" || data.status === "error") {
+          setAiStatus(data.status);
+          if (aiPollRef.current) clearInterval(aiPollRef.current);
+          // Recharge le contenu mis à jour par l'IA
+          if (data.status === "done") {
+            const refreshed = await getWikiDoc(docId);
+            setDoc(refreshed);
+            setContent(refreshed.content);
+          }
+        }
+      } catch { /* silencieux */ }
+    }, 2500);
+  };
+
   const save = async () => {
     if (!doc) return;
     setSaving(true);
@@ -75,6 +100,8 @@ export default function WikiDocPage() {
       setEditing(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+      // Lancer le polling IA si le contenu contient du code
+      if (content.includes('"codeBlock"')) startAiPolling(doc.id);
     } catch {
       alert("Erreur lors de la sauvegarde");
     } finally {
@@ -123,6 +150,21 @@ export default function WikiDocPage() {
             ← Wiki
           </button>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {aiStatus === "processing" && (
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#f59e0b", display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ animation: "pulse 1.2s infinite" }}>⚡</span> IA en cours…
+              </span>
+            )}
+            {aiStatus === "done" && (
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--green)" }}>
+                ✦ Commenté par IA
+              </span>
+            )}
+            {aiStatus === "error" && (
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#f43f5e" }}>
+                ⚠ Erreur IA
+              </span>
+            )}
             {saved && (
               <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--green)" }}>
                 ✓ Enregistré

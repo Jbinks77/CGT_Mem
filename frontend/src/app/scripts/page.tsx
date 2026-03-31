@@ -29,7 +29,7 @@ export default function ScriptsPage() {
       await addScript({ title: title.trim(), script: script.trim(), description: description.trim(), tags, section });
       setSuccess(true);
       setTitle(""); setScript(""); setDescription(""); setTagsInput("");
-      setTimeout(() => setSuccess(false), 4000);
+      setTimeout(() => setSuccess(false), 8000);
     } catch {
       setError("Erreur lors de l'ajout. Vérifie que le backend tourne.");
     } finally {
@@ -201,9 +201,15 @@ export default function ScriptsPage() {
 
             {/* Success */}
             {success && (
-              <div style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 10, padding: "12px 16px", color: "var(--green)", fontFamily: "var(--font-mono)", fontSize: 12, display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 16 }}>✓</span>
-                Script ajouté avec succès et disponible dans la documentation !
+              <div style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 10, padding: "12px 16px", fontFamily: "var(--font-mono)", fontSize: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ color: "var(--green)", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 16 }}>✓</span>
+                  Script ajouté avec succès !
+                </div>
+                <div style={{ color: "#f59e0b", display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
+                  <span>⚡</span>
+                  L&apos;IA analyse et commente ton script en arrière-plan — retrouve-le dans la documentation dans quelques secondes.
+                </div>
               </div>
             )}
 

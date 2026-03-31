@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     database_path: str = os.environ.get("DATABASE_PATH", os.path.join(BASE_DIR, "data", "cmdmem.db"))
     embedding_model: str = "all-MiniLM-L6-v2"
     allowed_origins: list[str] = ["*"]
+    groq_api_key: str = ""
     secret_patterns: list[str] = [
         r"(?i)(password|passwd|pwd)\s*[=:]\s*\S+",
         r"(?i)(token|api[_-]?key|secret|auth)\s*[=:]\s*\S+",

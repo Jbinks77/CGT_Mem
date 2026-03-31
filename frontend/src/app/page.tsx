@@ -3,6 +3,18 @@
 import { useState, useEffect, useRef } from "react"; // useRef kept for Counter/SkillBar
 import { useRouter } from "next/navigation";
 import CyberBackground from "@/components/CyberBackground";
+import PixelGame from "@/components/PixelGame";
+
+function useIsMobile() {
+  const [mob, setMob] = useState(false);
+  useEffect(() => {
+    const check = () => setMob(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  return mob;
+}
 
 /* ─── CV Data ────────────────────────────────────────────────────────────────── */
 
@@ -157,14 +169,48 @@ function SkillBar({ name, level, color }: { name: string; level: number; color: 
   );
 }
 
+/* ─── Root: mode selector ────────────────────────────────────────────────── */
+export default function Page() {
+  const [mode, setMode] = useState<"game" | "cv">("game");
+  const mob = useIsMobile();
+
+  return (
+    <>
+      {/* Mode toggle button — always visible */}
+      <button
+        onClick={() => setMode(m => m === "game" ? "cv" : "game")}
+        style={{
+          position: "fixed", top: mob ? 14 : 12, right: mob ? 8 : 12, zIndex: 9999,
+          background: "rgba(0,10,25,0.92)", border: "1px solid #00d4ff",
+          color: "#00d4ff", padding: mob ? "10px 14px" : "6px 12px", borderRadius: 4, cursor: "pointer",
+          fontFamily: '"Press Start 2P", monospace', fontSize: mob ? 7 : 8,
+          boxShadow: "0 0 12px rgba(0,212,255,0.3)",
+          backdropFilter: "blur(8px)",
+          touchAction: "manipulation",
+          WebkitTapHighlightColor: "transparent",
+        }}
+      >
+        {mode === "game" ? "[ CV ]" : "[ GAME ]"}
+      </button>
+
+      {mode === "game" ? (
+        <PixelGame />
+      ) : (
+        <Portfolio />
+      )}
+    </>
+  );
+}
+
 /* ─── Main Component ─────────────────────────────────────────────────────── */
-export default function Portfolio() {
+function Portfolio() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [activeExp, setActiveExp] = useState(0);
   const [scanLine, setScanLine] = useState(0);
   const router = useRouter();
+  const mob = useIsMobile();
 
   /* ── GSAP scroll reveals ──────────────────────────────────────────────────── */
   useEffect(() => {
@@ -243,8 +289,8 @@ export default function Portfolio() {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* HERO SECTION                                                          */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      <section style={{ position: "relative", zIndex: 2, minHeight: "100vh", display: "flex", alignItems: "center", padding: "80px 5vw 60px" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", width: "100%", display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 40, alignItems: "center" }}>
+      <section style={{ position: "relative", zIndex: 2, minHeight: "100vh", display: "flex", alignItems: "center", padding: mob ? "100px 5vw 60px" : "80px 5vw 60px" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", width: "100%", display: "grid", gridTemplateColumns: mob ? "1fr" : "1fr 1.6fr", gap: mob ? 24 : 40, alignItems: "center" }}>
 
           {/* Left — Profile Panel */}
           <div style={{ ...panel, textAlign: "center" }}>
@@ -336,7 +382,7 @@ export default function Portfolio() {
             </p>
 
             {/* Stats grid */}
-            <div className="hero-cta" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+            <div className="hero-cta" style={{ display: "grid", gridTemplateColumns: mob ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: 12 }}>
               {STATS.map((s) => (
                 <div key={s.label} style={{ ...panel, padding: "16px 12px", textAlign: "center" }}>
                   <HudCorners color={s.color} size={10} thickness={1} />
@@ -363,8 +409,8 @@ export default function Portfolio() {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* SKILLS + CERTS                                                        */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      <section style={{ position: "relative", zIndex: 2, padding: "80px 5vw" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40 }}>
+      <section style={{ position: "relative", zIndex: 2, padding: mob ? "40px 5vw" : "80px 5vw" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: mob ? "1fr" : "1.2fr 1fr", gap: mob ? 24 : 40 }}>
 
           {/* Skills */}
           <div style={{ ...panel }} className="reveal-up">
@@ -435,28 +481,24 @@ export default function Portfolio() {
             <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(52,211,153,0.3), transparent)" }} />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 0 }} className="reveal-up">
+          <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "280px 1fr", gap: 0 }} className="reveal-up">
 
             {/* Tab selector */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 0, borderRight: "1px solid rgba(0,212,255,0.08)" }}>
+            <div style={{ display: "flex", flexDirection: mob ? "row" : "column", gap: 0, overflowX: mob ? "auto" : undefined, borderRight: mob ? "none" : "1px solid rgba(0,212,255,0.08)", borderBottom: mob ? "1px solid rgba(0,212,255,0.08)" : "none" }}>
               {EXP.map((ex, i) => (
                 <button key={ex.id} onClick={() => setActiveExp(i)} style={{
-                  padding: "20px 24px", textAlign: "left", cursor: "pointer",
+                  padding: mob ? "12px 16px" : "20px 24px", textAlign: "left", cursor: "pointer", flexShrink: 0,
                   background: activeExp === i ? `${ex.color}08` : "transparent",
-                  border: "none", borderBottom: "1px solid rgba(255,255,255,0.04)",
-                  borderLeft: `2px solid ${activeExp === i ? ex.color : "transparent"}`,
+                  border: "none", borderBottom: mob ? `2px solid ${activeExp === i ? ex.color : "transparent"}` : "1px solid rgba(255,255,255,0.04)",
+                  borderLeft: mob ? "none" : `2px solid ${activeExp === i ? ex.color : "transparent"}`,
                   transition: "all 0.2s",
                 }}>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: activeExp === i ? ex.color : "rgba(232,232,240,0.3)", letterSpacing: "0.1em", marginBottom: 4 }}>
-                    [{ex.id}]
-                  </div>
-                  <div style={{ fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 700, color: activeExp === i ? "#e8e8f0" : "rgba(232,232,240,0.4)", marginBottom: 2 }}>
+                  {!mob && <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: activeExp === i ? ex.color : "rgba(232,232,240,0.3)", letterSpacing: "0.1em", marginBottom: 4 }}>[{ex.id}]</div>}
+                  <div style={{ fontFamily: "var(--font-display)", fontSize: mob ? 11 : 14, fontWeight: 700, color: activeExp === i ? "#e8e8f0" : "rgba(232,232,240,0.4)", marginBottom: mob ? 0 : 2, whiteSpace: "nowrap" }}>
                     {ex.company}
                   </div>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: activeExp === i ? ex.color : "rgba(232,232,240,0.25)", letterSpacing: "0.04em" }}>
-                    {ex.period}
-                  </div>
-                  {ex.current && (
+                  {!mob && <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: activeExp === i ? ex.color : "rgba(232,232,240,0.25)", letterSpacing: "0.04em" }}>{ex.period}</div>}
+                  {ex.current && !mob && (
                     <div style={{ marginTop: 6, display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--font-mono)", fontSize: 9, color: "#34d399", letterSpacing: "0.1em" }}>
                       <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#34d399", display: "inline-block" }} />
                       ACTUEL
@@ -470,7 +512,7 @@ export default function Portfolio() {
             {EXP.map((ex, i) => (
               <div key={ex.id} style={{
                 display: activeExp === i ? "block" : "none",
-                padding: "28px 32px",
+                padding: mob ? "16px" : "28px 32px",
                 background: `${ex.color}04`,
                 borderBottom: "1px solid rgba(255,255,255,0.04)",
               }}>
@@ -511,7 +553,7 @@ export default function Portfolio() {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       <section style={{ position: "relative", zIndex: 2, padding: "0 5vw 100px" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, alignItems: "center" }}>
+          <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "1fr 1fr", gap: mob ? 24 : 40, alignItems: "center" }}>
 
             {/* Left decoration */}
             <div className="reveal-up">
@@ -592,7 +634,7 @@ export default function Portfolio() {
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
       <footer style={{ position: "relative", zIndex: 2, borderTop: "1px solid rgba(255,255,255,0.04)", padding: "24px 5vw" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", flexDirection: mob ? "column" : "row", justifyContent: "space-between", alignItems: "center", gap: mob ? 8 : 0, textAlign: mob ? "center" : undefined }}>
           <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "rgba(232,232,240,0.2)", letterSpacing: "0.1em" }}>
             © 2025 JEAN-BAPTISTE CHAGNAT
           </span>

@@ -347,6 +347,7 @@ export default function WikiDocPage() {
 
         {/* Editor / Reader */}
         <RichEditor
+          key={editing ? "edit" : "read"}
           content={editing ? content : doc.content}
           onChange={setContent}
           readOnly={!editing}

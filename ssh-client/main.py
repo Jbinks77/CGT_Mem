@@ -14,6 +14,8 @@ import re
 import os
 import socket
 import logging
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ── Config ────────────────────────────────────────────────────────────────────
 CMDMEM_URL   = os.environ.get("CMDMEM_URL", "https://api.chagnat.fr")
@@ -487,7 +489,7 @@ class SSHTab(ctk.CTkFrame):
         payload = {"command": cmd, "shell": "ssh", "hostname": host, "username": user}
         try:
             log.debug("POST %s — cmd=%r host=%s user=%s", url, cmd, host, user)
-            resp = requests.post(url, json=payload, timeout=6)
+            resp = requests.post(url, json=payload, timeout=6, verify=False)
             log.debug("Response %s: %s", resp.status_code, resp.text[:200])
             ok = resp.ok
             if not ok:
@@ -816,7 +818,7 @@ class App(ctk.CTk):
     def _ping_cmdmem(self):
         def check():
             try:
-                resp = requests.get(f"{CMDMEM_URL}/api/health", timeout=3)
+                resp = requests.get(f"{CMDMEM_URL}/api/health", timeout=3, verify=False)
                 ok = resp.ok
                 log.debug("Health check: %s", resp.status_code)
             except Exception as e:

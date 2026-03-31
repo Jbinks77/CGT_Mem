@@ -88,10 +88,10 @@ const CV: Record<string, { title: string; icon: string; content: React.ReactNode
     content: (
       <div className="grid grid-cols-2 gap-4">
         {[
-          { cat: "Réseau & Sécurité", items: ["Palo Alto NGFW", "Check Point", "Cisco IOS", "VPN/IPSec", "Zero Trust"] },
-          { cat: "Cloud & DevOps",    items: ["AWS", "Azure", "Docker", "Nginx", "Linux Admin"] },
-          { cat: "Scripting",         items: ["Python", "Bash", "PowerShell", "FastAPI", "Next.js"] },
-          { cat: "Cybersécurité",     items: ["Qualys VMDR", "SIEM/SOC", "Pentest", "ISO 27001", "ANSSI"] },
+          { cat: "Réseau & Sécurité",  items: ["Firewall Check Point", "Palo Alto NGFW", "Akamai Web Security", "VPN/IPSec", "Zero Trust"] },
+          { cat: "Cloud & DevOps",     items: ["Jenkins", "Puppet", "GitLab", "Docker", "Linux Admin", "Windows Server"] },
+          { cat: "Monitoring & ITSM",  items: ["Centreon", "Qualys VMDR", "Tanium", "Active Directory", "GPO"] },
+          { cat: "Cybersécurité",      items: ["SIEM/SOC (N2)", "Pentest", "ISO 27001", "ANSSI", "Gestion vulnérabilités"] },
         ].map(({ cat, items }) => (
           <div key={cat} className="bg-black/30 rounded-lg p-3 border border-white/10">
             <h3 className="text-yellow-300 font-bold text-sm mb-2">{cat}</h3>
@@ -108,12 +108,12 @@ const CV: Record<string, { title: string; icon: string; content: React.ReactNode
     content: (
       <div className="space-y-4">
         {[
-          { co: "Pluxee (ex-Sodexo)", role: "Ingénieur Cybersécurité", period: "2023 – Présent",
-            tasks: ["Gestion firewall Palo Alto NGFW (700+ règles)", "Projet Zero Trust Network Access", "Revue de sécurité architecturale", "Automatisation Python/Ansible"] },
-          { co: "OCD (Orange CyberDefense)", role: "Consultant Sécurité Réseau", period: "2021 – 2023",
-            tasks: ["Audits techniques clients CAC40", "Déploiement solutions SASE/SD-WAN", "Rédaction politiques sécurité", "Formations équipes clients"] },
-          { co: "Hutchinson", role: "Admin Réseau & Sécu", period: "2019 – 2021",
-            tasks: ["Infrastructure multi-sites (30+ sites)", "Migration VPN SSL → IPSec", "Déploiement NAC 802.1X", "Supervision NMS Zabbix"] },
+          { co: "PLUXEE", role: "Ingénieur Sécurité et Système", period: "2023 — PRÉSENT",
+            tasks: ["Gestion et remédiation des vulnérabilités via Qualys", "Configuration sécurité sur la plateforme Akamai", "Supervision via Centreon, Jenkins, Puppet et GitLab", "Déploiement de Tanium pour les mises à jour serveurs"] },
+          { co: "ORANGE CYBERDEFENSE", role: "Alternance — Sécurité Réseau", period: "2020 — 2022",
+            tasks: ["Incidents de niveau 2 sur infrastructures de sécurité réseau", "Administration firewalls : Check Point, Palo Alto, Juniper", "Liaison et support avec les équipes constructeurs"] },
+          { co: "HUTCHINSON", role: "Alternance — Admin. Système & Réseau", period: "2019 — 2020",
+            tasks: ["Administration d'un parc de ~300 serveurs Windows & Linux", "Gestion des utilisateurs et accès (Active Directory, GPO)", "Maintenance et support de l'infrastructure réseau"] },
         ].map(({ co, role, period, tasks }) => (
           <div key={co} className="bg-black/30 rounded-lg p-3 border border-white/10">
             <div className="flex justify-between items-start mb-1">
@@ -133,18 +133,14 @@ const CV: Record<string, { title: string; icon: string; content: React.ReactNode
     content: (
       <div className="grid grid-cols-2 gap-3">
         {[
-          { name: "PCNSA",          org: "Palo Alto Networks",  year: "2022", color: "from-orange-600 to-red-700" },
-          { name: "CCSA",           org: "Check Point",         year: "2021", color: "from-red-600 to-red-800" },
-          { name: "ITIL 4 Foundation", org: "Axelos",           year: "2020", color: "from-purple-600 to-purple-800" },
-          { name: "Qualys VMDR",    org: "Qualys",              year: "2023", color: "from-blue-600 to-blue-800" },
-          { name: "Cisco CCNA",     org: "Cisco",               year: "2019", color: "from-teal-600 to-teal-800" },
-          { name: "AWS SAA",        org: "Amazon Web Services", year: "2023", color: "from-yellow-600 to-orange-700" },
-        ].map(({ name, org, year, color }) => (
-          <div key={name} className={`bg-gradient-to-br ${color} rounded-lg p-3 text-center border border-white/20`}>
-            <div className="text-2xl mb-1">🏅</div>
-            <h3 className="text-white font-bold text-sm">{name}</h3>
+          { name: "ITIL V4 Foundation",       org: "Axelos",  icon: "⚙️", color: "from-purple-600 to-purple-800" },
+          { name: "Akamai Web Security App",  org: "Akamai",  icon: "🛡️", color: "from-blue-600 to-cyan-700" },
+        ].map(({ name, org, icon, color }) => (
+          <div key={name} className={`bg-gradient-to-br ${color} rounded-lg p-4 text-center border border-white/20`}>
+            <div className="text-3xl mb-2">{icon}</div>
+            <h3 className="text-white font-bold text-sm mb-1">{name}</h3>
             <p className="text-white/70 text-xs">{org}</p>
-            <p className="text-white/50 text-xs">{year}</p>
+            <div className="mt-2 inline-block bg-white/10 border border-white/20 px-2 py-0.5 rounded text-white/80 text-xs">VALIDÉ</div>
           </div>
         ))}
       </div>
@@ -160,10 +156,10 @@ const CV: Record<string, { title: string; icon: string; content: React.ReactNode
           <p className="text-gray-400 text-sm">Ingénieur Cybersécurité · Paris, France</p>
         </div>
         {[
-          { icon: "📧", label: "Email",    value: "chagnat-jb@outlook.fr",    href: "mailto:chagnat-jb@outlook.fr" },
-          { icon: "💼", label: "LinkedIn", value: "linkedin.com/in/jbchagnat", href: "https://linkedin.com/in/jbchagnat" },
-          { icon: "🐙", label: "GitHub",   value: "github.com/jbchagnat",      href: "https://github.com/jbchagnat" },
-          { icon: "🌐", label: "Site",     value: "www.chagnat.fr",            href: "https://www.chagnat.fr" },
+          { icon: "📧", label: "Email",    value: "chagnat-jb@outlook.fr",                       href: "mailto:chagnat-jb@outlook.fr" },
+          { icon: "📞", label: "Téléphone",value: "06 21 23 50 08",                               href: "tel:+33621235008" },
+          { icon: "💼", label: "LinkedIn", value: "jean-baptiste-chagnat-418b22187",              href: "https://www.linkedin.com/in/jean-baptiste-chagnat-418b22187/" },
+          { icon: "🌐", label: "Site",     value: "www.chagnat.fr",                               href: "https://www.chagnat.fr" },
         ].map(({ icon, label, value, href }) => (
           <a key={label} href={href} target="_blank" rel="noreferrer"
              className="flex items-center gap-3 bg-black/30 rounded-lg p-3 border border-white/10 hover:border-white/30 transition-colors group">

@@ -37,10 +37,8 @@ const SKILLS = [
 ];
 
 const CERTS = [
-  { name: "PCNSA", full: "Palo Alto Networks\nCertified Network Security", color: "#ff6b35", icon: "🔥" },
-  { name: "CCSA", full: "Check Point\nCertified Security Admin", color: "#00d4ff", icon: "🛡️" },
-  { name: "ITIL 4", full: "Foundation\nService Management", color: "#a78bfa", icon: "⚙️" },
-  { name: "QUALYS", full: "Qualys\nVulnerability Management", color: "#34d399", icon: "🔍" },
+  { name: "ITIL V4", full: "Foundation\nService Management", color: "#a78bfa", icon: "⚙️" },
+  { name: "AKAMAI", full: "Web Security App\nAkamai Technologies", color: "#00d4ff", icon: "🛡️" },
 ];
 
 const EXP = [
@@ -339,22 +337,23 @@ function Portfolio() {
             ))}
 
             {/* Contact buttons */}
-            <div style={{ display: "flex", gap: 8, marginTop: 20, justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: 8, marginTop: 20, justifyContent: "center", flexWrap: "wrap" }}>
               {[
-                { label: "LinkedIn", color: "#0077b5" },
-                { label: "GitHub",   color: "#6e5494" },
-                { label: "Email",    color: "#00d4ff" },
-              ].map(({ label, color }) => (
-                <button key={label} style={{
+                { label: "LinkedIn", color: "#0077b5", href: "https://www.linkedin.com/in/jean-baptiste-chagnat-418b22187/" },
+                { label: "Email",    color: "#00d4ff", href: "mailto:chagnat-jb@outlook.fr" },
+                { label: "Tél.",     color: "#34d399", href: "tel:+33621235008" },
+              ].map(({ label, color, href }) => (
+                <a key={label} href={href} target="_blank" rel="noreferrer" style={{
                   fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.08em",
                   padding: "7px 14px", borderRadius: 3, cursor: "pointer",
                   background: "transparent", color,
                   border: `1px solid ${color}44`,
                   transition: "all 0.2s",
+                  textDecoration: "none",
                 }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `${color}18`; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                >{label}</button>
+                >{label}</a>
               ))}
             </div>
           </div>

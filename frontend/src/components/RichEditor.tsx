@@ -127,6 +127,12 @@ export default function RichEditor({ content, onChange, readOnly = false }: Rich
     immediatelyRender: false,
   });
 
+  // Sync editable state when readOnly prop changes
+  useEffect(() => {
+    if (!editor) return;
+    editor.setEditable(!readOnly);
+  }, [editor, readOnly]);
+
   // Sync external content changes
   useEffect(() => {
     if (!editor) return;

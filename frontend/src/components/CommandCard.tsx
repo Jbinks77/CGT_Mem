@@ -52,9 +52,29 @@ export default function CommandCard({ id, command, description, section, categor
 
         {/* Description */}
         {description && (
-          <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5, marginBottom: 10 }}>
-            {description}
-          </p>
+          category === "script" ? (
+            <pre style={{
+              fontSize: 11,
+              fontFamily: "var(--font-mono)",
+              color: "#a5b4fc",
+              lineHeight: 1.6,
+              marginBottom: 10,
+              background: "rgba(0,0,0,0.3)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 6,
+              padding: "8px 12px",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-all",
+              maxHeight: 80,
+              overflow: "hidden",
+            }}>
+              {description.split("\n").slice(0, 4).join("\n")}{description.split("\n").length > 4 ? "\n…" : ""}
+            </pre>
+          ) : (
+            <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5, marginBottom: 10 }}>
+              {description}
+            </p>
+          )
         )}
 
         {/* Footer */}

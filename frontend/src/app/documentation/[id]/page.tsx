@@ -223,8 +223,54 @@ export default function DocDetailPage() {
             <div style={{ padding: 32, display: "flex", flexDirection: "column", gap: 28 }}>
               {entry.description && (
                 <div>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--muted)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 10 }}>Description</div>
-                  <p style={{ fontSize: 15, color: "var(--text)", lineHeight: 1.65, fontWeight: 300 }}>{entry.description}</p>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--muted)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 10 }}>
+                    {entry.category === "script" ? "Script" : "Description"}
+                  </div>
+                  {entry.category === "script" ? (
+                    <div style={{
+                      background: "rgba(0,0,0,0.4)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 10,
+                      overflow: "hidden",
+                    }}>
+                      <div style={{
+                        background: "var(--surface2)",
+                        borderBottom: "1px solid rgba(255,255,255,0.06)",
+                        padding: "8px 14px",
+                        display: "flex",
+                        gap: 6,
+                        alignItems: "center",
+                      }}>
+                        {["#ff5f57","#febc2e","#28c840"].map(c => (
+                          <span key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c, opacity: 0.8 }} />
+                        ))}
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--muted)", marginLeft: 6 }}>
+                          {entry.section || "script"}
+                        </span>
+                      </div>
+                      <pre style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 13,
+                        lineHeight: 1.7,
+                        padding: "16px 20px",
+                        margin: 0,
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        overflowX: "auto",
+                      }}>
+                        {entry.description.split("\n").map((line, i) => (
+                          <span
+                            key={i}
+                            style={{ color: line.trimStart().startsWith("# ") ? "#fbbf24" : "#a5b4fc", display: "block" }}
+                          >
+                            {line || " "}
+                          </span>
+                        ))}
+                      </pre>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: 15, color: "var(--text)", lineHeight: 1.65, fontWeight: 300 }}>{entry.description}</p>
+                  )}
                 </div>
               )}
 

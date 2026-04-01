@@ -100,6 +100,7 @@ interface RichEditorProps {
 
 export default function RichEditor({ content, onChange, readOnly = false }: RichEditorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const parsedContent = (() => {
     if (!content) return "";
@@ -160,6 +161,32 @@ export default function RichEditor({ content, onChange, readOnly = false }: Rich
     reader.readAsDataURL(file);
     e.target.value = "";
   }, [editor]);
+
+  const addCopyButtons = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.querySelectorAll("pre").forEach((pre) => {
+      if (pre.querySelector(".copy-code-btn")) return;
+      const btn = document.createElement("button");
+      btn.className = "copy-code-btn";
+      btn.textContent = "Copier";
+      btn.addEventListener("click", () => {
+        const text = pre.querySelector("code")?.textContent ?? pre.textContent ?? "";
+        navigator.clipboard.writeText(text).then(() => {
+          btn.textContent = "✓ Copié";
+          setTimeout(() => { btn.textContent = "Copier"; }, 2000);
+        });
+      });
+      pre.appendChild(btn);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!editor) return;
+    addCopyButtons();
+    editor.on("update", addCopyButtons);
+    return () => { editor.off("update", addCopyButtons); };
+  }, [editor, addCopyButtons]);
 
   const addLink = useCallback(() => {
     if (!editor) return;
@@ -303,6 +330,7 @@ export default function RichEditor({ content, onChange, readOnly = false }: Rich
 
       {/* ── Editor area ── */}
       <div
+        ref={containerRef}
         style={{
           border: "1px solid rgba(255,255,255,0.08)",
           borderRadius: readOnly ? 10 : "0 0 10px 10px",
@@ -380,6 +408,17 @@ export default function RichEditor({ content, onChange, readOnly = false }: Rich
           padding: 0 3px;
         }
         .tiptap-wrapper .ProseMirror > * + * { margin-top: 0.4em; }
+        .tiptap-wrapper pre { position: relative; }
+        .tiptap-wrapper .copy-code-btn {
+          position: absolute; top: 8px; right: 8px;
+          background: rgba(108,99,255,0.15); border: 1px solid rgba(108,99,255,0.35);
+          color: #6c63ff; padding: 3px 10px; border-radius: 4px;
+          font-size: 11px; cursor: pointer; opacity: 0;
+          transition: opacity 0.2s; font-family: var(--font-mono, monospace);
+          letter-spacing: 0.05em;
+        }
+        .tiptap-wrapper pre:hover .copy-code-btn { opacity: 1; }
+        .tiptap-wrapper .copy-code-btn:hover { background: rgba(108,99,255,0.3); }
       `}</style>
     </div>
   );
